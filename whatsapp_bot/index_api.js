@@ -241,6 +241,7 @@ async function startBot() {
                       replyVideo: async (buffer, legenda = '') => await sock.sendMessage(msg.key.remoteJid, { video: buffer, mimetype: 'video/mp4', caption: legenda }, { quoted: msg }),
                       replyImage: async (buffer, caption = '') => await sock.sendMessage(msg.key.remoteJid, { image: buffer, caption }, { quoted: msg }),
                       replySticker: async (nome) => {try {const buffer = carregarSticker(nome);await sock.sendMessage(msg.key.remoteJid, { sticker: buffer }, { quoted: msg });} catch (erro) {console.log('Erro ao enviar figurinha:', erro.message);}},
+                      replyStickerBuffer: async (buffer, citar = msg) => await sock.sendMessage(msg.key.remoteJid, { sticker: buffer }, { quoted: citar }),
                       baixarMidia: async (baixarQuoted = false) => {return await baixarMidia(msg, sock, baixarQuoted);}
                   };
                   if(ctx.OnList){

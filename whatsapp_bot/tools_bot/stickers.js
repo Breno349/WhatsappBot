@@ -1,9 +1,36 @@
-// tools_bot/stickers.js
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
+const { execFile } = require('child_process');
+const util = require('util');
+const execFileAsync = util.promisify(execFile);
+const ffmpegPath = require('ffmpeg-static');
 
 const STICKERS_DIR = path.join(__dirname, '..', 'stickers');
 const cache = new Map(); // nome -> Buffer, carregado uma vez só
+
+async function converterImagemEmFigurinha(bufferImagem) {
+  const entrada = path.join(os.tmpdir(), `sticker-in-${Date.now()}.png`);
+  const saida = path.join(os.tmpdir(), `sticker-out-${Date.now()}.webp`);
+
+  fs.writeFileSync(entrada, bufferImagem);
+
+  try {
+    await execFileAsync(ffmpegPath, [
+      '-i', entrada,
+      '-vf', 'scale=512:512:force_original_aspect_ratio=decrease,pad=512:512:(ow-iw)/2:(oh-ih)/2:color=0x00000000',
+      '-c:v', 'libwebp',
+      '-y',
+      saida,
+    ]);
+
+    return fs.readFileSync(saida);
+  } finally {
+    // limpa os temporários mesmo se der erro no meio
+    if (fs.existsSync(entrada)) fs.unlinkSync(entrada);
+    if (fs.existsSync(saida)) fs.unlinkSync(saida);
+  }
+}
 
 function carregarSticker(nome) {
   if (cache.has(nome)) return cache.get(nome); // já leu antes, reaproveita
@@ -18,4 +45,4 @@ function carregarSticker(nome) {
   return buffer;
 }
 
-module.exports = { carregarSticker };
+module.exports = { carregarSticker,converterImagemEmFigurinha };

@@ -4,6 +4,7 @@ const console = require('console');
 const fs = require('fs');
 const { adicionar } = require('./tools_bot/listaUsuarios.js');
 const { configDotenv } = require('dotenv');
+const { carregarSticker, converterImagemEmFigurinha } = require('./tools_bot/stickers.js');
 
 const MENU_INFO = [
     {
@@ -129,11 +130,7 @@ const COMMANDS = {
     },
     */
     dog: async (ctx) => {
-        if(!ctx.isQuoted){
-            await ctx.replySticker('dog_shil')
-        } else {
-            
-        }
+        await ctx.replySticker('dog_shil')
     },
     mutar: async (ctx) => {
         if(!ctx.isOwner){
@@ -176,6 +173,23 @@ const COMMANDS = {
             }
         }
     },
+    fig: async (ctx) => {
+        //apenas imagen
+        if(!ctx.isQuoted){
+            if(ctx.tipo == 'imageMessage'){
+                const bufferImagem = await ctx.baixarMidia(false);
+                const bufferSticker = await converterImagemEmFigurinha(bufferImagem);
+                await ctx.replyStickerBuffer(bufferSticker, ctx.mensagemCitada);
+            } else {
+                return;
+            }
+        }
+        if(ctx.quotedMessage.imageMessage){
+            const bufferImagem = await ctx.baixarMidia(true);
+            const bufferSticker = await converterImagemEmFigurinha(bufferImagem);
+            await ctx.replyStickerBuffer(bufferSticker, ctx.mensagemCitada);
+        }
+    }
 };
 
 module.exports = {
