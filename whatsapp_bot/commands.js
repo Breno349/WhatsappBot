@@ -1,10 +1,9 @@
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const console = require('console');
-const { baixarAudio, baixarVideo, QUALIDADES, listarQualidades, obterInfoVideo, formatarDuracao } = require('./tools_bot/youtube_download_youtubeijs')
+//const { baixarAudio, baixarVideo, QUALIDADES, listarQualidades, obterInfoVideo, formatarDuracao } = require('./tools_bot/youtube_download_youtubeijs')
 const fs = require('fs');
 const { adicionar } = require('./tools_bot/listaUsuarios.js');
 const { configDotenv } = require('dotenv');
-//const { adicionar, remover, obter, listar } = require('./tools_bot/listaUsuarios.js');
 
 const MENU_INFO = [
     {
@@ -13,6 +12,7 @@ const MENU_INFO = [
     {
         nome: '.piada', desc: 'Uma piada aleatória *sujeito a constrangimento*'
     },
+    /*
     {
         nome: '.ytinfo', desc: 'Buscar por informações de um *link* do youtube.'
     },
@@ -21,7 +21,7 @@ const MENU_INFO = [
     },
     {
         nome: '.ytvideo', desc: 'Baixar um vídeo do youtube.'
-    },
+    },*/
     {
         nome: '.mutar', desc: 'Impedir que uma pessoa execute comandos.', onlyOwner: true
     },{
@@ -54,6 +54,7 @@ const COMMANDS = {
         const data = await resp.json();
         await ctx.replyText(data.joke ?? data.setup + '\n' + data.delivery);
     },
+    /*
     ytaudio: async (ctx) => {
         const url = ctx.args[0];
         if (!url) {
@@ -123,6 +124,7 @@ const COMMANDS = {
             await ctx.replyText('Não consegui consultar esse link 😕');
         }
     },
+    */
     dog: async (ctx) => await ctx.replySticker('dog_shil'),
     mutar: async (ctx) => {
         if(!ctx.isOwner){
