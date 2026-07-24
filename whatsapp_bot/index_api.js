@@ -9,7 +9,7 @@ const {
 } = require('@whiskeysockets/baileys');
 const { usePostgresAuthState } = require('./tools_bot/pgAuthState.js');
 const pino = require('pino');
-const qrcodeTerminal = require('qrcode-terminal'); // Mantido para os logs do terminal
+//const qrcodeTerminal = require('qrcode-terminal'); // Mantido para os logs do terminal
 const logger = pino({ level: 'silent' });
 const { COMMANDS } = require('./commands.js');
 const fs = require('fs');
@@ -177,8 +177,8 @@ async function startBot() {
             if (qr) {
                 currentQR = qr;
                 botStatus = 'aguardando_qrcode';
-                console.log('\nEscaneie o QR code abaixo com o WhatsApp (Aparelhos conectados):\n');
-                qrcodeTerminal.generate(qr, { small: true });
+                //console.log('\nEscaneie o QR code abaixo com o WhatsApp (Aparelhos conectados):\n');
+                //qrcodeTerminal.generate(qr, { small: true });
                 
                 // Gera um link externo com o QR Code para enviar no Telegram
                 const qrUrlApi = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`;
@@ -194,7 +194,7 @@ async function startBot() {
                 const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
                 
                 console.log('Conexão fechada.', statusCode, '- Reconectando:', shouldReconnect);
-                await sendTelegramMessage(`🔴 *Bot Desconectado!* StatusCode: ${statusCode}`, TELEGRAM_CHAT_ID);
+                await sendTelegramMessage(`🔴 *Bot Desconectado!* ${shouldReconnect? '[SINCRONIZANDO]':''} StatusCode: ${statusCode}`, TELEGRAM_CHAT_ID);
 
                 if (shouldReconnect) {
                     startBot();
@@ -220,20 +220,24 @@ async function startBot() {
                 if (!COMMANDS[command]) continue;
                 const info = await obter( senderJid );
                 const OnList = info!==null? true : false;
-                const ctx = {
-                    msg, args, isGroup, isOwner, senderJid, senderName, tipo, isQuoted, quotedMessage, OnList,
-                    replyText: async (texto) => await sock.sendMessage(msg.key.remoteJid, { text: texto }, { quoted: msg }),
-                    replyAudio: async (buffer) => await sock.sendMessage(msg.key.remoteJid,{ audio: buffer, mimetype: 'audio/mp4', ptt: false },{ quoted: msg }),
-                    replyVideo: async (buffer, legenda = '') => await sock.sendMessage(msg.key.remoteJid, { video: buffer, mimetype: 'video/mp4', caption: legenda }, { quoted: msg }),
-                    replyImage: async (buffer, caption = '') => await sock.sendMessage(msg.key.remoteJid, { image: buffer, caption }, { quoted: msg }),
-                    replySticker: async (nome) => {try {const buffer = carregarSticker(nome);await sock.sendMessage(msg.key.remoteJid, { sticker: buffer }, { quoted: msg });} catch (erro) {console.log('Erro ao enviar figurinha:', erro.message);}},
-                    baixarMidia: async (baixarQuoted = false) => {return await baixarMidia(msg, sock, baixarQuoted);}
-                };
-                if(ctx.OnList){
-                    await userMuted(ctx,info);
-                    continue;
+                try {
+                  const ctx = {
+                      msg, args, isGroup, isOwner, senderJid, senderName, tipo, isQuoted, quotedMessage, OnList,
+                      replyText: async (texto) => await sock.sendMessage(msg.key.remoteJid, { text: texto }, { quoted: msg }),
+                      replyAudio: async (buffer) => await sock.sendMessage(msg.key.remoteJid,{ audio: buffer, mimetype: 'audio/mp4', ptt: false },{ quoted: msg }),
+                      replyVideo: async (buffer, legenda = '') => await sock.sendMessage(msg.key.remoteJid, { video: buffer, mimetype: 'video/mp4', caption: legenda }, { quoted: msg }),
+                      replyImage: async (buffer, caption = '') => await sock.sendMessage(msg.key.remoteJid, { image: buffer, caption }, { quoted: msg }),
+                      replySticker: async (nome) => {try {const buffer = carregarSticker(nome);await sock.sendMessage(msg.key.remoteJid, { sticker: buffer }, { quoted: msg });} catch (erro) {console.log('Erro ao enviar figurinha:', erro.message);}},
+                      baixarMidia: async (baixarQuoted = false) => {return await baixarMidia(msg, sock, baixarQuoted);}
+                  };
+                  if(ctx.OnList){
+                      await userMuted(ctx,info);
+                      continue;
+                  }
+                  enqueueCommand(() => COMMANDS[command](ctx));
+                } catch (erro){
+                  console.log("ERRO EM COMANDO: "+erro.message)
                 }
-                enqueueCommand(() => COMMANDS[command](ctx));
             }
         });
 
@@ -248,7 +252,7 @@ const app = express();
 app.use(express.json());
 
 // 1. Rota Health Check (Sempre retorna 200)
-app.get('/', (req, res) => {
+app.get('/bot', (req, res) => {
     res.status(200).json({ 
         status: 'online', 
         bot_status: botStatus 
@@ -292,10 +296,28 @@ app.get('/qr', async (req, res) => {
     }
 });
 
-// Inicialização do Servidor Web
+// Função para descobrir o IP local da máquina
+function obterIPLocal() {
+    const interfaces = os.networkInterfaces();
+    for (const nome in interfaces) {
+        for (const iface of interfaces[nome]) {
+            // Ignora IPs internos (como 127.0.0.1) e pega apenas o IPv4
+            if (iface.family === 'IPv4' && !iface.internal) {
+                return iface.address;
+            }
+        }
+    }
+    return 'localhost'; // Fallback de segurança
+}
+
+const HOST = obterIPLocal();
+
 app.listen(PORT, () => {
     console.log(`🌐 WebService rodando na porta ${PORT}`);
-    console.log(`👉 Health Check: http://localhost:${PORT}/`);
-    console.log(`👉 Iniciar Bot:  http://localhost:${PORT}/start`);
-    console.log(`👉 Ver QR Code:  http://localhost:${PORT}/qr`);
+    console.log(`👉 Health Check: http://${HOST}:${PORT}/bot`);
+    console.log(`👉 Iniciar Bot:  http://${HOST}:${PORT}/start`);
+    console.log(`👉 Ver QR Code:  http://${HOST}:${PORT}/qr`);
+    
+    // Deixando o localhost também como opção para facilitar o clique no PC
+    console.log(`\n💻 Ou acesse localmente: http://localhost:${PORT}/qr`);
 });
