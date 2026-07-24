@@ -89,7 +89,7 @@ const COMMANDS = {
         await ctx.replyText('⏳ Baixando vídeo, aguenta aí...');
         let caminho;
         try {
-            caminho = await baixarVideo(url, qualidade); // se undefined, usa 'media' por padrão
+            caminho = await baixarVideo(url, ctx, qualidade); // se undefined, usa 'media' por padrão
             const buffer = fs.readFileSync(caminho);
             await ctx.replyVideo(buffer);
         } catch (erro) {
