@@ -37,7 +37,7 @@ async function baixarAudio(url) {
     .args(['--cookies-from-browser', 'chrome'])
     .filter('audioonly')   // só o áudio
     .type('mp3')
-    .run(['--cookies-from-browser', 'chrome']);
+    .run(['--cookies', './cookies.txt']);
 
   return result.filePaths[0]; // caminho do arquivo baixado
 }
@@ -59,7 +59,7 @@ async function baixarVideo(url, ctx, qualidade = 'media') {
     .download(url)
     .quality(regraQualidade)
     .type('mp4')
-    .run(['--cookies-from-browser', 'chrome']);
+    .run(['--cookies', './cookies.txt']);
 
   const caminhoOriginal = result.filePaths[0];
 
