@@ -32,7 +32,7 @@ const MENU_INFO = [
         nome: '.dog', desc: 'Mandar fig do cachorro'
     },
     {
-        nome: '.fig', desc: 'Converter imagem em figurinha.', onlyOwner
+        nome: '.fig', desc: 'Converter imagem em figurinha.'
     }
 ]
 
@@ -177,10 +177,10 @@ const COMMANDS = {
         }
     },
     fig: async (ctx) => {
-        if(!ctx.isOwner){
-            await ctx.replySticker('dog_shil')
-            return;
-        }
+        //if(!ctx.isOwner){
+        //    await ctx.replySticker('dog_shil')
+        //    return;
+        //}
         if(!ctx.isQuoted){
             if(ctx.tipo == 'imageMessage'){
                 const bufferImagem = await ctx.baixarMidia(false);
