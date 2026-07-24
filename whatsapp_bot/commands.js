@@ -180,9 +180,8 @@ const COMMANDS = {
                 const bufferImagem = await ctx.baixarMidia(false);
                 const bufferSticker = await converterImagemEmFigurinha(bufferImagem);
                 await ctx.replyStickerBuffer(bufferSticker, ctx.mensagemCitada);
-            } else {
-                return;
             }
+            return;
         }
         if(ctx.quotedMessage.imageMessage){
             const bufferImagem = await ctx.baixarMidia(true);

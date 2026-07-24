@@ -9,11 +9,20 @@ const ffmpegPath = require('ffmpeg-static');
 const STICKERS_DIR = path.join(__dirname, '..', 'stickers');
 const cache = new Map(); // nome -> Buffer, carregado uma vez só
 
-async function converterImagemEmFigurinha(bufferImagem) {
-  const entrada = path.join(os.tmpdir(), `sticker-in-${Date.now()}.png`);
+async function converterImagemEmFigurinha(entradaOuBuffer) {
   const saida = path.join(os.tmpdir(), `sticker-out-${Date.now()}.webp`);
+  let entrada;
+  let precisaApagarEntrada = false;
 
-  fs.writeFileSync(entrada, bufferImagem);
+  if (Buffer.isBuffer(entradaOuBuffer)) {
+    entrada = path.join(os.tmpdir(), `sticker-in-${Date.now()}.png`);
+    fs.writeFileSync(entrada, entradaOuBuffer);
+    precisaApagarEntrada = true;
+  } else if (typeof entradaOuBuffer === 'string' && fs.existsSync(entradaOuBuffer)) {
+    entrada = entradaOuBuffer; // já é um caminho de arquivo válido — usa direto
+  } else {
+    throw new Error('Entrada inválida: nem Buffer nem caminho de arquivo existente');
+  }
 
   try {
     await execFileAsync(ffmpegPath, [
@@ -23,11 +32,9 @@ async function converterImagemEmFigurinha(bufferImagem) {
       '-y',
       saida,
     ]);
-
     return fs.readFileSync(saida);
   } finally {
-    // limpa os temporários mesmo se der erro no meio
-    if (fs.existsSync(entrada)) fs.unlinkSync(entrada);
+    if (precisaApagarEntrada && fs.existsSync(entrada)) fs.unlinkSync(entrada);
     if (fs.existsSync(saida)) fs.unlinkSync(saida);
   }
 }
