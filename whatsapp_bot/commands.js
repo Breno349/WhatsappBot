@@ -26,6 +26,9 @@ const MENU_INFO = [
         nome: '.mutar', desc: 'Impedir que uma pessoa execute comandos.', onlyOwner: true
     },{
         nome: '.revelar', desc: 'Revelar imagem/video de visualização unica', onlyOwner: true
+    },
+    {
+        nome: '.dog', desc: 'Mandar fig do cachorro'
     }
 ]
 
@@ -125,7 +128,13 @@ const COMMANDS = {
         }
     },
     */
-    dog: async (ctx) => await ctx.replySticker('dog_shil'),
+    dog: async (ctx) => {
+        if(!ctx.isQuoted){
+            await ctx.replySticker('dog_shil')
+        } else {
+            
+        }
+    },
     mutar: async (ctx) => {
         if(!ctx.isOwner){
             await ctx.replySticker('dog_shil')
