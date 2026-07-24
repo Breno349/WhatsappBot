@@ -1,0 +1,32 @@
+{
+  "name": "whatsappbot",
+  "version": "1.0.0",
+  "description": "Bot de Whatsapp que irá responder perguntas simples e realizar tarefas simples.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Breno349/WhatsappBot.git"
+  },
+  "keywords": [
+    "WhatsappBot"
+  ],
+  "author": "Breno Serra",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Breno349/WhatsappBot/issues"
+  },
+  "homepage": "https://github.com/Breno349/WhatsappBot#readme",
+  "dependencies": {
+    "@whiskeysockets/baileys": "^7.0.0-rc13",
+    "dotenv": "^17.4.2",
+    "ffmpeg-static": "^5.3.0",
+    "logger": "^0.0.1",
+    "pino": "^10.3.1",
+    "qrcode-terminal": "^0.12.0",
+    "ytdlp-nodejs": "^3.4.4"
+  }
+}
