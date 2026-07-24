@@ -33,10 +33,7 @@ const urlBase = `http://${HOST}:${PORT}`;
 const commandQueue = [];
 let isProcessing = false;
 
-const fs = require('fs');
-const path = require('path');
 
-// Caminho absoluto para o arquivo de cookies
 const caminhoCookies = path.join(__dirname, 'cookies.txt');
 
 // Se a variável existir no Render, ele cria o arquivo físico na hora que o bot liga!
