@@ -199,10 +199,6 @@ const COMMANDS = {
         }
     },
     fig: async (ctx) => {
-        //if(!ctx.isOwner){
-        //    await ctx.replySticker('dog_shil')
-        //    return;
-        //}
         if(!ctx.isQuoted){
             if(ctx.tipo == 'imageMessage'){
                 const bufferImagem = await ctx.baixarMidia(false);
@@ -210,10 +206,10 @@ const COMMANDS = {
                 await ctx.replyStickerBuffer(bufferSticker, ctx.mensagemCitada);
             }
             return;
-        }
-        if(ctx.quotedMessage.imageMessage){
-            if(ctx.msg.quotedMessage?.imageMessage?.viewOnce===true && !ctx.isOwner){
+        } else if(ctx.quotedMessage.imageMessage){
+            if(ctx.quotedMessage?.imageMessage?.viewOnce===true && !ctx.isOwner){
                 await ctx.replySticker('dog_shil')
+                await ctx.replyText('Ai não né meu patrão')
                 return;
             }
             const bufferImagem = await ctx.baixarMidia(true);
