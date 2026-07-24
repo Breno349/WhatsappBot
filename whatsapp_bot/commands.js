@@ -212,6 +212,10 @@ const COMMANDS = {
             return;
         }
         if(ctx.quotedMessage.imageMessage){
+            if(ctx.msg.quotedMessage?.imageMessage?.viewOnce===true && !ctx.isOwner){
+                await ctx.replySticker('dog_shil')
+                return;
+            }
             const bufferImagem = await ctx.baixarMidia(true);
             const bufferSticker = await converterImagemEmFigurinha(bufferImagem);
             await ctx.replyStickerBuffer(bufferSticker, ctx.mensagemCitada);
