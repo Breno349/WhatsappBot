@@ -1,6 +1,6 @@
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const console = require('console');
-const { baixarAudio, baixarVideo, QUALIDADES, listarQualidades, obterInfoVideo, formatarDuracao } = require('./tools_bot/youtube_download.js')
+const { baixarAudio, baixarVideo, QUALIDADES, listarQualidades, obterInfoVideo, formatarDuracao } = require('./tools_bot/youtube_download_youtubeijs')
 const fs = require('fs');
 const { adicionar } = require('./tools_bot/listaUsuarios.js');
 const { configDotenv } = require('dotenv');
