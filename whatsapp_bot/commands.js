@@ -2,7 +2,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const console = require('console');
 //const { baixarAudio, baixarVideo, QUALIDADES, listarQualidades, obterInfoVideo, formatarDuracao } = require('./tools_bot/youtube_download_youtubeijs')
 const fs = require('fs');
-const { adicionar } = require('./tools_bot/listaUsuarios.js');
+const { adicionar,remover,obter } = require('./tools_bot/listaUsuarios.js');
 const { configDotenv } = require('dotenv');
 const { carregarSticker, converterImagemEmFigurinha } = require('./tools_bot/stickers.js');
 
@@ -25,7 +25,11 @@ const MENU_INFO = [
     },*/
     {
         nome: '.mutar', desc: 'Impedir que uma pessoa execute comandos.', onlyOwner: true
-    },{
+    },
+    {
+        nome: '.desmutar', desc: 'Desmutar a pessoa', onlyOwner: true
+    },
+    {
         nome: '.revelar', desc: 'Revelar imagem/video de visualização unica', onlyOwner: true
     },
     {
@@ -141,16 +145,34 @@ const COMMANDS = {
             return;
         }
         if(!ctx.isGroup) return;
-
         const contextInfo = ctx.msg.message[ctx.tipo]?.contextInfo;
         const num_jid = contextInfo?.mentionedJid?.length ?? 0
         if(num_jid == 0){
             console.log("Não marcou ninguem moço")
         } else if(num_jid == 1){
-            const motivo = ctx.args.slice(1).join(' ') ?? "<sem motivo>" ;
+            const motivo = ctx.args.slice(1).join(' ') ?? "sem motivo" ;
             const jid = contextInfo?.mentionedJid[0];
-            adicionar(jid,false,motivo)
-            await ctx.replyText('✅ Ele foi bloqueado.')
+            await adicionar(jid,false,motivo)
+            await ctx.replyText('👮‍♂️ Mutado')
+        }
+    },
+    desmutar: async (ctx) => {
+        if(!ctx.isOwner){
+            await ctx.replySticker('dog_shil')
+            return;
+        }
+        if(!ctx.isGroup) return;
+        const contextInfo = ctx.msg.message[ctx.tipo]?.contextInfo;
+        const num_jid = contextInfo?.mentionedJid?.length ?? 0
+        if(num_jid == 0){
+            console.log("Não marcou ninguem moço")
+        } else if(num_jid == 1){
+            const jid = contextInfo?.mentionedJid[0];
+            const exts = await obter( jid )
+            if(exts !== null){
+                await remover(jid)
+                await ctx.replyText('👮‍♂️ Desmutado')
+            }
         }
     },
     revelar: async (ctx) => {
