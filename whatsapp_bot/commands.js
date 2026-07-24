@@ -30,13 +30,16 @@ const MENU_INFO = [
     },
     {
         nome: '.dog', desc: 'Mandar fig do cachorro'
+    },
+    {
+        nome: '.fig', desc: 'Converter imagem em figurinha.', onlyOwner
     }
 ]
 
 const COMMANDS = {
     menu: async (ctx) => {
         const list_cmds = MENU_INFO.map( cmd => {
-                return `🤖 *${cmd.nome}* ${cmd.onlyOwner? '\`\`\`(admin)\`\`\`' : ''}\nℹ️ _${cmd.desc}_\n\n`
+                return `🤖 *${cmd.nome}* ${cmd.onlyOwner? '\`\`\`(admin)\`\`\`' : ''}\nℹ️ _${cmd.desc}_\n`
             }
         ).join('');
         await ctx.replyText(
@@ -174,7 +177,10 @@ const COMMANDS = {
         }
     },
     fig: async (ctx) => {
-        //apenas imagen
+        if(!ctx.isOwner){
+            await ctx.replySticker('dog_shil')
+            return;
+        }
         if(!ctx.isQuoted){
             if(ctx.tipo == 'imageMessage'){
                 const bufferImagem = await ctx.baixarMidia(false);
