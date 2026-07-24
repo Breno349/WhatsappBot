@@ -33,6 +33,18 @@ const urlBase = `http://${HOST}:${PORT}`;
 const commandQueue = [];
 let isProcessing = false;
 
+const fs = require('fs');
+const path = require('path');
+
+// Caminho absoluto para o arquivo de cookies
+const caminhoCookies = path.join(__dirname, 'cookies.txt');
+
+// Se a variável existir no Render, ele cria o arquivo físico na hora que o bot liga!
+if (process.env.YOUTUBE_COOKIES) {
+    fs.writeFileSync(caminhoCookies, process.env.YOUTUBE_COOKIES);
+    console.log("✅ Arquivo cookies.txt gerado com sucesso a partir do Render!");
+}
+
 function analisarMensagem(msg) {
   const isGroup = msg.key.remoteJid.endsWith('@g.us');
   const isOwner = msg.key.fromMe;
