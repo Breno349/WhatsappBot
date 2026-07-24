@@ -11,7 +11,7 @@ const MENU_INFO = [
         nome: '.ping', desc: 'Responder com pong.'
     },
     {
-        nome: '.piada', desc: 'Uma piada aleatória *sujeito a constrangimento*'
+        nome: '.piada', desc: 'Uma piada ruinha aleatória'
     },
     /*
     {
@@ -43,11 +43,12 @@ const MENU_INFO = [
 const COMMANDS = {
     menu: async (ctx) => {
         const list_cmds = MENU_INFO.map( cmd => {
-                return `🤖 *${cmd.nome}* ${cmd.onlyOwner? '\`\`\`(admin)\`\`\`' : ''}\nℹ️ _${cmd.desc}_\n`
+                return `*${cmd.nome}* ${cmd.onlyOwner? '_(admin)_' : '' }\n` +
+                ` ↳ \`${cmd.desc}\`\n\n`;
             }
         ).join('');
         await ctx.replyText(
-            `👋 Este é o Bot do ${process.env.USER_NAME}\n📢 Aqui estão os comandos:\n\n${list_cmds}`
+            `🤝 Bem-vindo ao menu do bot *[${process.env.USER_NAME}]*\n📢 Esses são os Comandos:\n\n${list_cmds}`
         )
     },
     ping: async (ctx) => {

@@ -140,7 +140,6 @@ async function startBot(){
         //const { state, saveCreds } = await useMultiFileAuthState(process.env.AUTH_PATH);
         const { state, saveCreds } = await usePostgresAuthState(process.env.AUTHID ?? 'meu-bot');
         const { version } = await fetchLatestBaileysVersion();
-
         const sock = makeWASocket({
             version,
             auth: state,
@@ -168,7 +167,6 @@ async function startBot(){
                 console.log('✅ Bot conectado ao WhatsApp com sucesso!');
             }
         });
-
         sock.ev.on('messages.upsert', async ({ messages }) => {
             for (const msg of messages) {
                 if (!msg.message) continue;
@@ -198,6 +196,16 @@ async function startBot(){
                   console.log("ERRO EM COMANDO: "+erro.message)
                 }
             }
+        });
+        sock.ev.on('messages.update', async (updates) => {
+          for (const update of updates) {
+            if(update.update?.message == null && update.update?.messageStubType == 1){
+              const msg_id = update.update?.key?.id;
+              const from_jid = update.update?.key?.remoteJid;
+              if(!msg_id || !from_jid) return;
+              console.log(`mensagem de ${from_jid} apagada.`)
+            }
+          }
         });
 
     } catch (erro){

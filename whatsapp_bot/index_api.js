@@ -171,7 +171,6 @@ async function startBot() {
         botStatus = 'iniciando';
         const { state, saveCreds } = await usePostgresAuthState(process.env.AUTHID ?? 'meu-bot');
         const { version } = await fetchLatestBaileysVersion();
-
         const sock = makeWASocket({
             version,
             auth: state,
@@ -179,9 +178,7 @@ async function startBot() {
             printQRInTerminal: false, // Desativado no baileys, vamos tratar manualmente
             browser: [`Bot [${process.env.AUTHID }]`, 'Chrome', '1.0.0'],
         });
-        
-        sockInstance = sock; // Salva a instância globalmente se precisar manipular via API
-
+        sockInstance = sock;
         sock.ev.on('creds.update', saveCreds); 
         sock.ev.on('connection.update', async (update) => {
             const { connection, lastDisconnect, qr } = update;
@@ -221,7 +218,6 @@ async function startBot() {
                 await sendTelegramMessage(`✅ <b>Bot conectado ao WhatsApp com sucesso!</b>\nCaso queira deligar: <tg-spoiler>${urlBase}/stop</tg-spoiler>`, TELEGRAM_CHAT_ID);
             }
         });
-
         sock.ev.on('messages.upsert', async ({ messages }) => {
             for (const msg of messages) {
                 if (!msg.message) continue;
@@ -252,6 +248,16 @@ async function startBot() {
                   console.log("ERRO EM COMANDO: "+erro.message)
                 }
             }
+        });
+        sock.ev.on('messages.update', async (updates) => {
+          for (const update of updates) {
+            if(update.update?.message == null && update.update?.messageStubType == 1){
+              const msg_id = update.update?.key?.id;
+              const from_jid = update.update?.key?.remoteJid;
+              if(!msg_id || !from_jid) return;
+              console.log(`mensagem de ${from_jid} apagada.`)
+            }
+          }
         });
 
     } catch (erro){
