@@ -165,7 +165,7 @@ async function startBot() {
             auth: state,
             logger,
             printQRInTerminal: false, // Desativado no baileys, vamos tratar manualmente
-            browser: ['Bot WhatsApp WebService', 'Chrome', '1.0.0'],
+            browser: [`Bot [${process.env.AUTHID }]`, 'Chrome', '1.0.0'],
         });
         
         sockInstance = sock; // Salva a instância globalmente se precisar manipular via API
@@ -262,7 +262,7 @@ app.get('/bot', (req, res) => {
 // 2. Rota para iniciar o bot
 app.get('/start', (req, res) => {
     if (botStatus === 'conectado' || botStatus === 'iniciando') {
-        return res.status(400).json({ 
+        return res.status(200).json({ 
             erro: 'O bot já está em execução ou tentando conectar.', 
             status: botStatus 
         });
