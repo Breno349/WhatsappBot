@@ -148,10 +148,9 @@ async function processQueue() {
 
   isProcessing = false;
 }
-async function userMuted(ctx, info) {
-  console.log('From Blocked')
+async function userMuted(ctx, info, nome) {
   if (info?.informado === false) {
-    await ctx.replyText(`> Mermão tu ta mutado...\nmotivo: *${info.motivo}*`);
+    await ctx.replyText(`> [${nome}] Você não pode usar comando...\nmotivo: *${info.motivo}*`);
     await marcarInformado(ctx.senderJid); // não toca no nivel, só marca o aviso como enviado
   }
 }
@@ -245,7 +244,7 @@ async function startBot() {
                       baixarMidia: async (baixarQuoted = false) => {return await baixarMidia(msg, sock, baixarQuoted);}
                   };
                   if(ctx.OnList){
-                      await userMuted(ctx,info);
+                      await userMuted(ctx,info,senderName);
                       continue;
                   }
                   enqueueCommand(() => COMMANDS[command](ctx));
