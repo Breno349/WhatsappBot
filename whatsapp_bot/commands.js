@@ -24,6 +24,8 @@ const MENU_INFO = [
     },
     {
         nome: '.mutar', desc: 'Impedir que uma pessoa execute comandos.', onlyOwner: true
+    },{
+        nome: '.revelar', desc: 'Revelar imagem/video de visualização unica', onlyOwner: true
     }
 ]
 
@@ -37,7 +39,16 @@ const COMMANDS = {
             `👋 Este é o Bot do ${process.env.USER_NAME}\n📢 Aqui estão os comandos:\n\n${list_cmds}`
         )
     },
-    ping: async (ctx) => await ctx.replyText('pong 🏓'),
+    ping: async (ctx) => {
+        const timeMSG = (ctx.msg.messageTimestamp);
+        const timeCRR = (Date.now());
+        let delay = '--';
+        if(timeCRR && timeMSG){
+            const ms = timeCRR - (timeMSG * 1000);
+            delay = String(ms);
+        }
+        await ctx.replyText('pong 🏓 _'+delay+'ms_')
+    },
     piada: async (ctx) => {
         const resp = await fetch('https://v2.jokeapi.dev/joke/Any?lang=pt');
         const data = await resp.json();
@@ -131,8 +142,11 @@ const COMMANDS = {
             await ctx.replyText('✅ Ele foi bloqueado.')
         }
     },
-
     revelar: async (ctx) => {
+        if(!ctx.isOwner){
+            await ctx.replySticker('dog_shil')
+            return;
+        }
         if(ctx.isQuoted && ctx.quotedMessage.imageMessage){
             const res = await ctx.baixarMidia( true );
             if(res){

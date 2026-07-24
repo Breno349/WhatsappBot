@@ -23,11 +23,15 @@ const { sendTelegramMessage,escapeMarkdownV2 } = require('./utils/telegram.js');
 
 const PREFIX = process.env.PREFIX || '.';
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID; // Adicione isso no seu .env
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4000;
 
 let botStatus = 'offline';
 let currentQR = '';
 let sockInstance = null;
+const HOST = obterIPLocal(); 
+const urlBase = `http://${HOST}:${PORT}`;
+const commandQueue = [];
+let isProcessing = false;
 
 function analisarMensagem(msg) {
   const isGroup = msg.key.remoteJid.endsWith('@g.us');
@@ -61,8 +65,6 @@ function analisarMensagem(msg) {
     senderName
   };
 }
-const commandQueue = [];
-let isProcessing = false;
 function enqueueCommand(job) {
   commandQueue.push(job);
   processQueue(); // tenta iniciar o processamento (se já não estiver rodando)
@@ -153,7 +155,18 @@ async function userMuted(ctx, info) {
     await marcarInformado(ctx.senderJid); // não toca no nivel, só marca o aviso como enviado
   }
 }
-
+function obterIPLocal() {
+    const interfaces = os.networkInterfaces();
+    for (const nome in interfaces) {
+        for (const iface of interfaces[nome]) {
+            // Ignora IPs internos (como 127.0.0.1) e pega apenas o IPv4
+            if (iface.family === 'IPv4' && !iface.internal) {
+                return iface.address;
+            }
+        }
+    }
+    return 'localhost'; // Fallback de segurança
+}
 async function startBot() {
     try {
         botStatus = 'iniciando';
@@ -177,36 +190,36 @@ async function startBot() {
             if (qr) {
                 currentQR = qr;
                 botStatus = 'aguardando_qrcode';
-                //console.log('\nEscaneie o QR code abaixo com o WhatsApp (Aparelhos conectados):\n');
-                //qrcodeTerminal.generate(qr, { small: true });
                 
                 // Gera um link externo com o QR Code para enviar no Telegram
                 const qrUrlApi = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}`;
                 
-                const mensagemTelegram = `⚠️ *Bot requer autenticação!*\nEscaneie o QR Code acessando a rota \`/qr\` da sua API ou visualize diretamente aqui:\n${qrUrlApi}`;
+                const mensagemTelegram = `⚠️ <b>Bot requer autenticação!</b>\nEscaneie o QR Code acessando a rota \`/qr\` da sua API ou visualize diretamente aqui:\n${qrUrlApi}`;
                 await sendTelegramMessage(mensagemTelegram, TELEGRAM_CHAT_ID);
             }
             
             if (connection === 'close') {
                 botStatus = 'desconectado';
                 currentQR = '';
+
                 const statusCode = lastDisconnect?.error?.output?.statusCode;
                 const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
                 
                 console.log('Conexão fechada.', statusCode, '- Reconectando:', shouldReconnect);
-                await sendTelegramMessage(`🔴 *Bot Desconectado!* ${shouldReconnect? '[SINCRONIZANDO]':''} StatusCode: ${statusCode}`, TELEGRAM_CHAT_ID);
+                await sendTelegramMessage(`🔴 <b>Bot Desconectado!</b> ${shouldReconnect? '[SINCRONIZANDO]':''} StatusCode: ${statusCode}`, TELEGRAM_CHAT_ID);
 
                 if (shouldReconnect) {
                     startBot();
                 } else {
                     console.log('Sessão deslogada. Apague os dados de login e inicie novamente.');
-                    await sendTelegramMessage(`❌ *Sessão Deslogada!* É necessário limpar a base e gerar um novo QR Code.`, TELEGRAM_CHAT_ID);
+                    await sendTelegramMessage(`❌ <b>Sessão Deslogada!</b> É necessário limpar a base e gerar um novo QR Code.`, TELEGRAM_CHAT_ID);
                 }
             } else if (connection === 'open') {
                 botStatus = 'conectado';
                 currentQR = '';
+
                 console.log('✅ Bot conectado ao WhatsApp com sucesso!');
-                await sendTelegramMessage('✅ *Bot conectado ao WhatsApp com sucesso!*', TELEGRAM_CHAT_ID);
+                await sendTelegramMessage(`✅ <b>Bot conectado ao WhatsApp com sucesso!</b>\nCaso queira deligar: <tg-spoiler>${urlBase}/stop</tg-spoiler>`, TELEGRAM_CHAT_ID);
             }
         });
 
@@ -244,7 +257,7 @@ async function startBot() {
     } catch (erro){
         botStatus = 'erro';
         console.log('Erro: '+erro.message);
-        await sendTelegramMessage(`❌ *Erro Crítico no Bot:* ${erro.message}`, TELEGRAM_CHAT_ID);
+        await sendTelegramMessage(`❌ <b>Erro Crítico no Bot:</b> ${erro.message}`, TELEGRAM_CHAT_ID);
     }
 }
 
@@ -258,7 +271,6 @@ app.get('/bot', (req, res) => {
         bot_status: botStatus 
     });
 });
-
 // 2. Rota para iniciar o bot
 app.get('/start', (req, res) => {
     if (botStatus === 'conectado' || botStatus === 'iniciando') {
@@ -271,8 +283,22 @@ app.get('/start', (req, res) => {
     startBot().catch(err => console.error(err));
     res.status(200).json({ mensagem: 'Processo de inicialização do bot foi acionado.' });
 });
+// 3. Desligar servidor
+app.get('/stop', async (req, res) => {
+    console.log("🛑 Comando remoto recebido. Encerrando o bot...");
+    
+    // Responde ao navegador/celular para você saber que deu certo
+    res.send("*Bot encerrado com sucesso!</h1><p>Você pode fechar esta aba.*");
+    
+    // Opcional: Avisa no Telegram que foi parado com sucesso
+    await sendTelegramMessage("🛑 <b>O Bot do WhatsApp foi desligado remotamente.</b>", TELEGRAM_CHAT_ID);
 
-// 3. Rota para exibir o QR Code no navegador
+    // Desliga o servidor Node em 1 segundo (dá tempo de enviar a resposta HTTP)
+    setTimeout(() => {
+        process.exit(0); 
+    }, 1000);
+});
+// 4. Rota para exibir o QR Code no navegador
 app.get('/qr', async (req, res) => {
     if (botStatus === 'conectado') {
         return res.status(200).send('<h2>O bot já está conectado!</h2>');
@@ -295,22 +321,6 @@ app.get('/qr', async (req, res) => {
         res.status(500).send('Erro ao renderizar o QR Code.');
     }
 });
-
-// Função para descobrir o IP local da máquina
-function obterIPLocal() {
-    const interfaces = os.networkInterfaces();
-    for (const nome in interfaces) {
-        for (const iface of interfaces[nome]) {
-            // Ignora IPs internos (como 127.0.0.1) e pega apenas o IPv4
-            if (iface.family === 'IPv4' && !iface.internal) {
-                return iface.address;
-            }
-        }
-    }
-    return 'localhost'; // Fallback de segurança
-}
-
-const HOST = obterIPLocal();
 
 app.listen(PORT, () => {
     console.log(`🌐 WebService rodando na porta ${PORT}`);

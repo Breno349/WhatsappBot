@@ -7,10 +7,12 @@ const RETRY_DELAY_MS = 1000; // espera entre tentativas
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
+function escapeMarkdownV2(texto) {
+    return String(texto).replace(/([_*\[\]()~`>#+\-=|{}.!\\])/g, '\\$1');
+}
 
-function escapeMarkdownV2(text) {
-    if (!text) return "";
-    return text.replace(/([_*\[\]()~`>#+\-=|{}.!])/g, '\\$1');
+function escapeMarkdownV2Code(texto) {
+    return String(texto).replace(/([`\\])/g, '\\$1');
 }
 
 async function withRetry(fn, maxRetries = MAX_RETRIES) {
@@ -37,16 +39,15 @@ async function withRetry(fn, maxRetries = MAX_RETRIES) {
     throw ultimoErro;
 }
 
-async function sendTelegramMessage(mensagemTXT, chat_id) {
+async function sendTelegramMessage(mensagem, chat_id) {
     try {
-        const mensagem = escapeMarkdownV2(mensagemTXT);
         await withRetry(() =>
             axios.post(
                 `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`,
                 {
                     chat_id: chat_id,
                     text: mensagem,
-                    parse_mode: "MarkdownV2"
+                    parse_mode: "HTML"
                 },
                 { timeout: TIMEOUT_MS }
             )

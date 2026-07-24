@@ -146,7 +146,7 @@ async function startBot(){
             auth: state,
             logger,
             printQRInTerminal: false,
-            browser: ['Bot WhatsApp', 'Chrome', '1.0.0'],
+            browser: [`Bot [${process.env.AUTHID }]`, 'Chrome', '1.0.0'],
         });
         sock.ev.on('creds.update', saveCreds); 
         sock.ev.on('connection.update', async (update) => {
