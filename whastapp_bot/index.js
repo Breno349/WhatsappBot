@@ -11,6 +11,7 @@ const qrcode = require('qrcode-terminal');
 const logger = pino({ level: 'silent' });
 const { COMMANDS } = require('./commands.js')
 const { carregarSticker } = require('./tools_bot/stickers.js');
+const { adicionar, remover, obter, listar } = require('./tools_bot/listaUsuarios.js');
 
 const PREFIX = process.env.PREFIX || '.'
 
@@ -25,6 +26,8 @@ function analisarMensagem(msg) {
 
   const contextInfo = conteudo?.contextInfo;
   const isQuoted = Boolean(contextInfo?.quotedMessage);
+
+  const senderName = msg.pushName || '~~';
 
   const texto =
     message.conversation ||
@@ -41,6 +44,7 @@ function analisarMensagem(msg) {
     isQuoted,
     quotedMessage: contextInfo?.quotedMessage,
     quotedParticipant: contextInfo?.participant,
+    senderName
   };
 }
 async function baixarMidia(msg) {
@@ -90,7 +94,7 @@ async function startBot(){
             browser: ['Bot WhatsApp', 'Chrome', '1.0.0'],
         });
         sock.ev.on('creds.update', saveCreds); 
-        sock.ev.on('connection.update', (update) => {
+        sock.ev.on('connection.update', async (update) => {
             const { connection, lastDisconnect, qr } = update;
             if (qr) {
                 console.log('\nEscaneie o QR code abaixo com o WhatsApp (Aparelhos conectados):\n');
@@ -113,25 +117,38 @@ async function startBot(){
         sock.ev.on('messages.upsert', async ({ messages }) => {
             for (const msg of messages) {
                 if (!msg.message) continue;
-                const { isGroup, isOwner, senderJid, tipo, texto, isQuoted, quotedMessage } = analisarMensagem(msg);
+                const { isGroup, isOwner, senderJid, tipo, texto, isQuoted, quotedMessage, senderName } = analisarMensagem(msg);
                 if (!texto.startsWith(PREFIX)) continue;
                 const [rawCommand, ...args] = texto.slice(PREFIX.length).trim().split(/\s+/);
                 const command = rawCommand.toLowerCase();
                 if (!COMMANDS[command]) continue;
+                const info = obter( senderJid );
+                const OnList = info!==null? true : false;
                 const ctx = {
-                    msg, args, isGroup, isOwner, senderJid, tipo, isQuoted, quotedMessage,
-                    replyText: (texto) => sock.sendMessage(msg.key.remoteJid, { text: texto }, { quoted: msg }),
-                    replyAudio: (buffer) => sock.sendMessage(msg.key.remoteJid,{ audio: buffer, mimetype: 'audio/mp4', ptt: false },{ quoted: msg }),
-                    replyVideo: (buffer) => sock.sendMessage(msg.key.remoteJid, { video: buffer, mimetype: 'video/mp4', caption: '' }, { quoted: msg }),
-                    replyImage: (buffer, caption = '') => sock.sendMessage(msg.key.remoteJid, { image: buffer, caption }, { quoted: msg }),
+                    msg, args, isGroup, isOwner, senderJid, senderName, tipo, isQuoted, quotedMessage, OnList,
+                    replyText: async (texto) => await sock.sendMessage(msg.key.remoteJid, { text: texto }, { quoted: msg }),
+                    replyAudio: async (buffer) => await sock.sendMessage(msg.key.remoteJid,{ audio: buffer, mimetype: 'audio/mp4', ptt: false },{ quoted: msg }),
+                    replyVideo: async (buffer) => await sock.sendMessage(msg.key.remoteJid, { video: buffer, mimetype: 'video/mp4', caption: '' }, { quoted: msg }),
+                    replyImage: async (buffer, caption = '') => await sock.sendMessage(msg.key.remoteJid, { image: buffer, caption }, { quoted: msg }),
                     replySticker: async (nome) => {try {const buffer = carregarSticker(nome);await sock.sendMessage(msg.key.remoteJid, { sticker: buffer }, { quoted: msg });} catch (erro) {console.log('Erro ao enviar figurinha:', erro.message);}},
                 };
+                if(ctx.OnList){
+                    await userMuted(ctx,info);
+                    continue;
+                }
                 enqueueCommand(() => COMMANDS[command](ctx));
             }
         });
 
     } catch (erro){
         console.log('Erro: '+erro.message)
+    }
+}
+
+async function userMuted(ctx,info){
+    if(info?.informado == false){
+        await ctx.replyText(`> Mermão tu ta mutado...\nmotivo: *${obter(ctx.senderJid).motivo}*`);
+        adicionar( ctx.senderJid,true,info.motivo )
     }
 }
 

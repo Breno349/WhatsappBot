@@ -2,6 +2,8 @@
 const fs = require('fs');
 const path = require('path');
 
+//173263326056701@lid
+
 const ARQUIVO = path.join(__dirname, '..', 'data', 'usuarios.json');
 
 function carregar() {
@@ -14,9 +16,9 @@ function salvar(dados) {
   fs.writeFileSync(ARQUIVO, JSON.stringify(dados, null, 2));
 }
 
-function adicionar(jid, nivel, motivo) {
+function adicionar(jid, informado, motivo) {
   const dados = carregar();
-  dados[jid] = { nivel, motivo, criadoEm: new Date().toISOString() };
+  dados[jid] = { informado, motivo, criadoEm: new Date().toISOString() };
   salvar(dados);
 }
 

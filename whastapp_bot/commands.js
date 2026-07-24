@@ -2,16 +2,15 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const console = require('console');
 const { baixarAudio, baixarVideo, QUALIDADES, listarQualidades, obterInfoVideo, formatarDuracao } = require('./tools_bot/youtube_download.js')
 const fs = require('fs');
-const { adicionar, remover, obter, listar } = require('./tools_bot/listaUsuarios.js');
-
-const USUARIOS = listar();
+const { adicionar } = require('./tools_bot/listaUsuarios.js');
+//const { adicionar, remover, obter, listar } = require('./tools_bot/listaUsuarios.js');
 
 const MENU_INFO = [
     {
         nome: '.ping', desc: 'Responder com pong.'
     },
     {
-        nome: '.piada', desc: 'Uma piada aleatória. _sujeito a constrangimento.._'
+        nome: '.piada', desc: 'Uma piada aleatória *sujeito a constrangimento*'
     },
     {
         nome: '.ytinfo', desc: 'Buscar por informações de um *link* do youtube.'
@@ -23,14 +22,18 @@ const MENU_INFO = [
         nome: '.ytvideo', desc: 'Baixar um vídeo do youtube.'
     },
     {
-        nome: '.mutar', desc: 'Impedir que uma pessoa execute comandos.'
+        nome: '.mutar', desc: 'Impedir que uma pessoa execute comandos.', onlyOwner: true
     }
 ]
 
 const COMMANDS = {
     menu: async (ctx) => {
+        const list_cmds = MENU_INFO.map( cmd => {
+                return `🤖 *${cmd.nome}* ${cmd.onlyOwner? '\`\`\`(admin)\`\`\`' : ''}\nℹ️ _${cmd.desc}_\n\n`
+            }
+        ).join('');
         await ctx.replyText(
-            `Este é o Bot do ${process.env.USER_NAME}\nAqui estão os comandos:\n\n${MENU_INFO.map(cmd => `Nome: *${cmd.nome}*\nDescrição: _${cmd.desc}_\n\n`)}`
+            `👋 Este é o Bot do ${process.env.USER_NAME}\n📢 Aqui estão os comandos:\n\n${list_cmds}`
         )
     },
     ping: async (ctx) => await ctx.replyText('pong 🏓'),
@@ -110,10 +113,23 @@ const COMMANDS = {
     },
     dog: async (ctx) => await ctx.replySticker('dog_shil'),
     mutar: async (ctx) => {
-        adicionar(ctx.senderJid,0,"Bicho besta demais.")
-        await ctx.replyText('Mutado.')
-        await ctx.replySticker('dog_shil')
-    }
+        if(!ctx.isOwner){
+            await ctx.replySticker('dog_shil')
+            return;
+        }
+        if(!ctx.isGroup) return;
+
+        const contextInfo = ctx.msg.message[ctx.tipo]?.contextInfo;
+        const num_jid = contextInfo?.mentionedJid?.length ?? 0
+        if(num_jid == 0){
+            console.log("Não marcou ninguem moço")
+        } else if(num_jid == 1){
+            const motivo = ctx.args.slice(1).join(' ') ?? "<sem motivo>" ;
+            const jid = contextInfo?.mentionedJid[0];
+            adicionar(jid,false,motivo)
+            await ctx.replyText('✅ Ele foi bloqueado.')
+        }
+    },
 };
 
 module.exports = {
