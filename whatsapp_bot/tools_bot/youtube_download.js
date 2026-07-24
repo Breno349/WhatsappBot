@@ -38,7 +38,11 @@ async function baixarAudio(url) {
     .args(['--cookies-from-browser', 'chrome'])
     .filter('audioonly')   // só o áudio
     .type('mp3')
-    .run(['--cookies', caminhoCookies]);
+    .run([
+        '--cookies', caminhoCookies, 
+        // 👇 ADICIONE A LINHA ABAIXO 👇
+        '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    ]);
 
   return result.filePaths[0]; // caminho do arquivo baixado
 }
@@ -61,7 +65,11 @@ async function baixarVideo(url, ctx, qualidade = 'media') {
     .download(url)
     .quality(regraQualidade)
     .type('mp4')
-    .run(['--cookies', caminhoCookies]);
+    .run([
+        '--cookies', caminhoCookies, 
+        // 👇 ADICIONE A LINHA ABAIXO 👇
+        '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    ]);
 
   const caminhoOriginal = result.filePaths[0];
 
