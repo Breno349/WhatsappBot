@@ -43,6 +43,8 @@ const caminhoCookies = path.join(__dirname, 'cookies.txt');
 if (process.env.YOUTUBE_COOKIES) {
     fs.writeFileSync(caminhoCookies, process.env.YOUTUBE_COOKIES);
     console.log("✅ Arquivo cookies.txt gerado com sucesso a partir do Render!");
+} else {
+    console.log("NÂO CARREGOU OS COOKIES")
 }
 
 function analisarMensagem(msg) {

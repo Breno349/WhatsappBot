@@ -32,12 +32,13 @@ const QUALIDADES = {
 };
 
 async function baixarAudio(url) {
+  const caminhoCookies = path.join(__dirname, 'cookies.txt');
   const result = await ytdlp
     .download(url)
     .args(['--cookies-from-browser', 'chrome'])
     .filter('audioonly')   // só o áudio
     .type('mp3')
-    .run(['--cookies', './cookies.txt']);
+    .run(['--cookies', caminhoCookies]);
 
   return result.filePaths[0]; // caminho do arquivo baixado
 }
@@ -55,11 +56,12 @@ async function baixarVideo(url, ctx, qualidade = 'media') {
 
   console.log(regraQualidade)
 
+  const caminhoCookies = path.join(__dirname, 'cookies.txt');
   const result = await ytdlp
     .download(url)
     .quality(regraQualidade)
     .type('mp4')
-    .run(['--cookies', './cookies.txt']);
+    .run(['--cookies', caminhoCookies]);
 
   const caminhoOriginal = result.filePaths[0];
 
