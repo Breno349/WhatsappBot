@@ -1,40 +1,47 @@
 // tools_bot/listaUsuarios.js
-const fs = require('fs');
-const path = require('path');
+const { Pool } = require('pg');
+//const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const pool = new Pool({
+            host: String(process.env.DB_HOST),
+            user: String(process.env.DB_USERNAME),
+            password: String(process.env.DB_PASSWORD),
+            database: String(process.env.DB_NAME),
+            port: process.env.DB_PORT,
+            ssl: false
+});
 
-//173263326056701@lid
-
-const ARQUIVO = path.join(__dirname, '..', 'data', 'usuarios.json');
-
-function carregar() {
-  if (!fs.existsSync(ARQUIVO)) return {};
-  return JSON.parse(fs.readFileSync(ARQUIVO, 'utf-8'));
+async function marcarInformado(jid) {
+  await pool.query('UPDATE usuarios_lista SET informado = true WHERE jid = $1', [jid]);
 }
 
-function salvar(dados) {
-  fs.mkdirSync(path.dirname(ARQUIVO), { recursive: true });
-  fs.writeFileSync(ARQUIVO, JSON.stringify(dados, null, 2));
+async function adicionar(jid, nivel, motivo) {
+  // Converte para número inteiro. Se for "false", null ou inválido, vira 0 (ou o nível padrão que preferir)
+  const nivelValido = (nivel === 'false' || !nivel) ? 0 : parseInt(nivel, 10);
+
+  await pool.query(
+    `INSERT INTO usuarios_lista (jid, nivel, motivo, informado)
+     VALUES ($1, $2, $3, false)
+     ON CONFLICT (jid) DO UPDATE SET nivel = $2, motivo = $3`,
+    [jid, nivelValido, motivo] // Usando a variável corrigida aqui
+  );
 }
 
-function adicionar(jid, informado, motivo) {
-  const dados = carregar();
-  dados[jid] = { informado, motivo, criadoEm: new Date().toISOString() };
-  salvar(dados);
+async function remover(jid) {
+  await pool.query('DELETE FROM usuarios_lista WHERE jid = $1', [jid]);
 }
 
-function remover(jid) {
-  const dados = carregar();
-  delete dados[jid];
-  salvar(dados);
+async function obter(jid) {
+  const { rows } = await pool.query('SELECT * FROM usuarios_lista WHERE jid = $1', [jid]);
+  return rows[0] ?? null;
 }
 
-function obter(jid) {
-  const dados = carregar();
-  return dados[jid] ?? null;
+async function marcarInformado(jid) {
+  await pool.query('UPDATE usuarios_lista SET informado = true WHERE jid = $1', [jid]);
 }
 
-function listar() {
-  return carregar();
+async function listar() {
+  const { rows } = await pool.query('SELECT * FROM usuarios_lista');
+  return rows;
 }
 
-module.exports = { adicionar, remover, obter, listar };
+module.exports = { adicionar, remover, obter, marcarInformado, listar };

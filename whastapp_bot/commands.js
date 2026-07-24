@@ -3,6 +3,7 @@ const console = require('console');
 const { baixarAudio, baixarVideo, QUALIDADES, listarQualidades, obterInfoVideo, formatarDuracao } = require('./tools_bot/youtube_download.js')
 const fs = require('fs');
 const { adicionar } = require('./tools_bot/listaUsuarios.js');
+const { configDotenv } = require('dotenv');
 //const { adicionar, remover, obter, listar } = require('./tools_bot/listaUsuarios.js');
 
 const MENU_INFO = [
@@ -128,6 +129,26 @@ const COMMANDS = {
             const jid = contextInfo?.mentionedJid[0];
             adicionar(jid,false,motivo)
             await ctx.replyText('✅ Ele foi bloqueado.')
+        }
+    },
+
+    revelar: async (ctx) => {
+        if(ctx.isQuoted && ctx.quotedMessage.imageMessage){
+            const res = await ctx.baixarMidia( true );
+            if(res){
+                const bufferDaImagem = await fs.promises.readFile(res);
+                await ctx.replyImage(bufferDaImagem, 'Legenda: '+(ctx.quotedMessage.imageMessage.caption ?? ''))
+            } else {
+                console.log('Não deu pra revelar a mensagem')
+            }
+        } else if(ctx.isQuoted && ctx.quotedMessage.videoMessage){
+            const res = await ctx.baixarMidia( true );
+            if(res){
+                const bufferDoVideo = await fs.promises.readFile(res);
+                await ctx.replyVideo(bufferDoVideo, 'Legenda: '+(ctx.quotedMessage.videoMessage.caption ?? ''))
+            } else {
+                console.log('Não deu pra revelar a mensagem')
+            }
         }
     },
 };
