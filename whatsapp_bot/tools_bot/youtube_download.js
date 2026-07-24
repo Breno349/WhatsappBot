@@ -5,20 +5,53 @@ const { execFile } = require('child_process');
 const util = require('util');
 const execFileAsync = util.promisify(execFile);
 const fs = require('fs');
-const path = require('path'); // <--- Adicione esta linha no topo
+const path = require('path');
+const os = require('os');
+
+const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
+// ==========================================
+// COOKIES — recria o arquivo em /tmp a partir da env var,
+// já que o disco do servidor é efêmero (não sobrevive a restarts)
+// ==========================================
+function garantirArquivoCookies() {
+  const caminho = path.join(os.tmpdir(), 'yt-cookies.txt');
+
+  if (!process.env.YOUTUBE_COOKIES) {
+    return null; // sem cookies configurados — segue sem eles
+  }
+
+  if (!fs.existsSync(caminho)) {
+    fs.writeFileSync(caminho, process.env.YOUTUBE_COOKIES);
+  }
+
+  return caminho;
+}
+
+// Opções comuns de autenticação/identidade, usadas em TODA chamada ao yt-dlp
+function opcoesAuth() {
+  const caminhoCookies = garantirArquivoCookies();
+  const opcoes = {
+    rawArgs: ['--user-agent', USER_AGENT],
+  };
+  if (caminhoCookies) {
+    opcoes.cookies = caminhoCookies;
+  }
+  return opcoes;
+}
 
 async function converterParaWhatsapp(caminhoEntrada, caminhoSaida) {
   await execFileAsync(ffmpegPath, [
     '-i', caminhoEntrada,
-    '-c:v', 'libx264',       // recodifica vídeo pra H.264
-    '-profile:v', 'baseline', // perfil mais compatível com players mobile
-    '-preset', 'ultrafast',   // <--- MÁGICA DA VELOCIDADE: Codificação super rápida
-    '-threads', '0',          // <--- Usa todos os núcleos do processador
+    '-c:v', 'libx264',
+    '-profile:v', 'baseline',
+    '-preset', 'ultrafast',
+    '-threads', '0',
     '-level', '3.0',
-    '-c:a', 'aac',            // recodifica áudio pra AAC
+    '-c:a', 'aac',
     '-b:a', '128k',
-    '-movflags', '+faststart', // move metadados pro início do arquivo — essencial pra streaming no mobile
-    '-y',                     // sobrescreve se já existir
+    '-movflags', '+faststart',
+    '-y',
     caminhoSaida,
   ]);
 
@@ -28,110 +61,89 @@ async function converterParaWhatsapp(caminhoEntrada, caminhoSaida) {
 const QUALIDADES = {
   baixa: '360p',
   media: '480p',
-  alta: '1080p'
+  alta: '1080p',
 };
 
 async function baixarAudio(url) {
-  const caminhoCookies = path.join(__dirname, 'cookies.txt');
-  const result = await ytdlp
-    .download(url)
-    .args(['--cookies-from-browser', 'chrome'])
-    .filter('audioonly')   // só o áudio
-    .type('mp3')
-    .run([
-        '--cookies', caminhoCookies, 
-        // 👇 ADICIONE A LINHA ABAIXO 👇
-        '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-    ]);
+  const { cookies, rawArgs } = opcoesAuth();
 
-  return result.filePaths[0]; // caminho do arquivo baixado
+  let builder = ytdlp
+    .download(url)
+    .filter('audioonly')
+    .type('mp3');
+
+  if (cookies) builder = builder.cookies(cookies);
+  builder = builder.addArgs(...rawArgs);
+
+  const result = await builder.run();
+  return result.filePaths[0];
 }
 
 async function baixarVideo(url, ctx, qualidade = 'media') {
   const resolucoesDisponiveis = await listarQualidades(url);
   const alvo = {
-    baixa: resolucoesDisponiveis.at(-1),   
-    media: resolucoesDisponiveis[Math.floor(resolucoesDisponiveis.length / 2)], 
-    alta: resolucoesDisponiveis[0],        
+    baixa: resolucoesDisponiveis.at(-1),
+    media: resolucoesDisponiveis[Math.floor(resolucoesDisponiveis.length / 2)],
+    alta: resolucoesDisponiveis[0],
   }[qualidade] ?? resolucoesDisponiveis[0];
 
   const alturaVideo = alvo.replace('p', '');
   const regraQualidade = `bestvideo[height<=${alturaVideo}]+bestaudio/best[height<=${alturaVideo}]/best`;
 
-  console.log(regraQualidade)
+  const { cookies, rawArgs } = opcoesAuth();
 
-  const caminhoCookies = path.join(__dirname, 'cookies.txt');
-  const result = await ytdlp
+  let builder = ytdlp
     .download(url)
     .quality(regraQualidade)
-    .type('mp4')
-    .run([
-        '--cookies', caminhoCookies, 
-        // 👇 ADICIONE A LINHA ABAIXO 👇
-        '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-    ]);
+    .type('mp4');
 
+  if (cookies) builder = builder.cookies(cookies);
+  builder = builder.addArgs(...rawArgs);
+
+  const result = await builder.run();
   const caminhoOriginal = result.filePaths[0];
 
-  // ---------------------------------------------------------
-  // CORREÇÃO: Usando o módulo 'path' para garantir a troca de nome
-  // ---------------------------------------------------------
   const parsedPath = path.parse(caminhoOriginal);
-  // Pega a pasta original + nome do arquivo sem extensão + adiciona '_whatsapp.mp4'
   const caminhoConvertido = path.join(parsedPath.dir, `${parsedPath.name}_whatsapp.mp4`);
-  // ---------------------------------------------------------
 
   await ctx.replyText('⏳ Convertendo vídeo..');
-  
   await converterParaWhatsapp(caminhoOriginal, caminhoConvertido);
-  
   fs.unlinkSync(caminhoOriginal);
 
   return caminhoConvertido;
 }
 
 async function listarQualidades(url) {
-  // OBS: Adicione aqui a questão dos cookies que vimos antes, se necessário!
-  const result = await ytdlp.getFormatsAsync(url);
+  const result = await ytdlp.getFormatsAsync(url, opcoesAuth());
 
   const resolucoes = [...new Set(
     result.formats
       .filter((f) => {
-        // 1. Tem que ter altura (height) e ser maior ou igual a 144
         const temAlturaValida = f.height && f.height >= 144;
-        
-        // 2. Garante que é um vídeo real (ignora áudio puro ou lixo)
         const temCodecVideo = f.vcodec && f.vcodec !== 'none';
-        
-        // 3. Rejeita especificamente os storyboards do YouTube
         const naoEhStoryboard = !(f.format_note || '').toLowerCase().includes('storyboard');
-        const naoEhSb0 = f.vcodec !== 'sb0'; // Outra forma que os storyboards aparecem
-
+        const naoEhSb0 = f.vcodec !== 'sb0';
         return temAlturaValida && temCodecVideo && naoEhStoryboard && naoEhSb0;
       })
       .map((f) => `${f.height}p`)
   )];
 
-  // Ordena da maior para a menor (ex: ['1080p', '720p', '360p'])
   const ordenado = resolucoes.sort((a, b) => parseInt(b) - parseInt(a));
 
-  // FALLBACK DE SEGURANÇA: 
-  // Se por algum motivo o vídeo for tão estranho que o filtro zerou a lista,
-  // nós forçamos '360p' para o código de download não dar erro de undefined.
   if (ordenado.length === 0) {
-    return ['360p']; 
+    return ['360p'];
   }
 
   return ordenado;
 }
 
 async function obterInfoVideo(url) {
-  const info = await ytdlp.getInfoAsync(url);
+  const info = await ytdlp.getInfoAsync(url, opcoesAuth());
   return {
     titulo: info.title,
     duracaoSegundos: info.duration,
     thumbnailUrl: info.thumbnail,
-    canal: info.uploader
+    canal: info.uploader,
   };
 }
 
