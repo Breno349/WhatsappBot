@@ -14,7 +14,7 @@ import { adicionar, remover, isMuted } from "./usuarios.js";
 
 export const Commands = {
     menu: async (ctx) => {
-        const cmds = Object.keys(Commands).map(item => `\`${ctx.config.prefixo}${item}\`${Commands[item].admin ? ' (🔒)' : ''} ${'_'+Commands[item].desc+'_' ?? ''}`)
+        const cmds = Object.keys(Commands).map(item => `\`${ctx.config.prefixo}${item}\`${Commands[item].admin ? ' (🔒)' : ''} ${Commands[item].desc ? '_'+Commands[item].desc+'_' : ''}`)
         const opcoes = `Comandos:\n\n${cmds.join('\n')}`
         if(ctx.config.autoreact) await ctx.responderReact( '👍' )
         await ctx.responderTexto(opcoes)
@@ -358,8 +358,14 @@ Commands.setgpfoto.admin = true
 Commands.setgpdesc.desc = "Definir descrição do grupo"
 Commands.setgpdesc.admin = true
 Commands.setgpnome.desc = "Definir nome do grupo"
-Commands.setgpnome.admin
+Commands.setgpnome.admin = true
 Commands.addgp.desc = "Adiciona pessoa"
-Commands.addgp.admin
+Commands.addgp.admin = true
 Commands.remgp.desc = "Remover pessoa"
-Commands.remgp.admin
+Commands.remgp.admin = true
+Commands.mutar.desc = "Impedir comandos"
+Commands.mutar.admin = true
+Commands.desmutar.desc = "Desfazer mutar"
+Commands.desmutar.admin = true
+Commands.piada.desc = "Buscar piada ruinha"
+//.mutar.adminandos"pedir comandos"
