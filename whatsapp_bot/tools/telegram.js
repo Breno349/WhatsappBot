@@ -1,4 +1,4 @@
-const axios = require('axios');
+import axios from 'axios'
 
 const TIMEOUT_MS = 8000;
 const MAX_RETRIES = 3;
