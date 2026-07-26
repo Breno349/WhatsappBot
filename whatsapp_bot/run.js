@@ -13,7 +13,7 @@ Bot.on('status',async (stt)=>{
       avisado = true;
     }
   } else if(stt === 'deslogado'){
-    if(!avisado && running){
+    if(!avisado || running){
       await sendTelegramMessage("⛔️ Bot Desconectado",process.env.TELEGRAM_CHATID)
       avisado = true;
     }
