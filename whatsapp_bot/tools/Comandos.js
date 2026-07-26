@@ -345,7 +345,11 @@ export const Commands = {
 
         const matchNumero = argsTexto[0]?.match(/^@?(\d{11,13})$/);
 
-        if (!ctx.isGrupo && matchNumero) {
+        if (ctx.isGrupo && ctx.mencionados.length > 0) {
+            destinoJid = ctx.mencionados[0]; // JID individual — mesmo mencionado em grupo, isso já cai no privado da pessoa
+            paraOutraPessoa = true;
+            argsTexto = argsTexto.filter(token => !/^@\d+$/.test(token)); // remove só o(s) token(s) de menção
+        } else if (!ctx.isGrupo && matchNumero) {
             argsTexto.shift();
             destinoJid = `55${matchNumero[1]}@s.whatsapp.net`;
             paraOutraPessoa = true;

@@ -164,7 +164,7 @@ export async function iniciarBot(){
             } else if(connection === 'open') {
                 //console.log('opened connection')
                 Bot.emit('status', 'conectado')
-                iniciarVerificadorLembretes(sock)
+                iniciarVerificadorLembretes(() => sock)
             }
         })
         sock.ev.on('creds.update', saveCreds)
