@@ -68,7 +68,8 @@ export const Commands = {
             const legenda = ctx.quoted[tipo].caption ?? ''
             const caminho = await ctx.baixar(true)
             if(caminho){
-                if(ctx.config.autoreact) await ctx.responderReact( '👍' )
+                //if(ctx.config.autoreact) await ctx.responderReact( '👍' )
+                if(ctx.args.length>0) await ctx.editarTexto(ctx.args.join(" "))
                 await ctx.privadoImage( caminho,legenda )
                 await remover(caminho)
             } else {
@@ -79,7 +80,8 @@ export const Commands = {
             const legenda = ctx.quoted[tipo].caption ?? ''
             const caminho = await ctx.baixar(true)
             if(caminho){
-                if(ctx.config.autoreact) await ctx.responderReact( '👍' )
+                //if(ctx.config.autoreact) await ctx.responderReact( '👍' )
+                if(ctx.args.length>0) await ctx.editarTexto(ctx.args.join(" "))           
                 await ctx.privadoVideo( caminho,legenda )
                 await remover(caminho)
             } else {
