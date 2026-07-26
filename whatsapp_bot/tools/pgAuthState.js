@@ -1,15 +1,6 @@
-// tools_bot/pgAuthState.js
-const { Pool } = require('pg');
-const { initAuthCreds, BufferJSON } = require('@whiskeysockets/baileys');
-
-const pool = new Pool({
-            host: String(process.env.DB_HOST),
-            user: String(process.env.DB_USERNAME),
-            password: String(process.env.DB_PASSWORD),
-            database: String(process.env.DB_NAME),
-            port: process.env.DB_PORT
-});
-
+// pgAuthState.js
+import { pool } from './db.js';
+import { initAuthCreds, BufferJSON } from '@whiskeysockets/baileys';
 
 async function garantirTabela() {
   await pool.query(`
@@ -36,7 +27,7 @@ async function escreverChave(sessionId, chave, valor) {
     await pool.query('DELETE FROM baileys_auth WHERE session_id = $1 AND chave = $2', [sessionId, chave]);
     return;
   }
-  const texto = JSON.stringify(valor, BufferJSON.replacer); // fica como STRING, não volta pra objeto
+  const texto = JSON.stringify(valor, BufferJSON.replacer);
   await pool.query(
     `INSERT INTO baileys_auth (session_id, chave, valor) VALUES ($1, $2, $3::jsonb)
      ON CONFLICT (session_id, chave) DO UPDATE SET valor = $3::jsonb`,
@@ -44,7 +35,7 @@ async function escreverChave(sessionId, chave, valor) {
   );
 }
 
-async function usePostgresAuthState(sessionId = 'main') {
+export async function usePostgresAuthState(sessionId = 'main') {
   await garantirTabela();
 
   const credsExistentes = await lerChave(sessionId, 'creds');
@@ -76,5 +67,3 @@ async function usePostgresAuthState(sessionId = 'main') {
     },
   };
 }
-
-module.exports = { usePostgresAuthState };
