@@ -13,9 +13,8 @@ Bot.on('status',async (stt)=>{
       avisado = true;
     }
   } else if(stt === 'deslogado'){
-    if(!avisado || running){
+    if(running){
       await sendTelegramMessage("⛔️ Bot Desconectado",process.env.TELEGRAM_CHATID)
-      avisado = true;
     }
     running = false;
   } else {
@@ -26,11 +25,13 @@ Bot.on('code',async (code)=>{
   //console.log('==> RUN: Code: ['+code+']')
   await sendTelegramMessage(`⚠️ Bot requer código: [<tg-spoiler>${code}</tg-spoiler>]`, process.env.TELEGRAM_CHATID)
   running = false;
+  avisado = false;
 })
 Bot.on('qrcode',async (qrcode)=>{
   //console.log('==> RUN: QRCode:\n'+qrcode)
   await sendTelegramMessage(`⚠️ Bot requer leitura do QRCode:\n${qrcode}`, process.env.TELEGRAM_CHATID)
   running = false;
+  avisado = false;
 })
 Bot.on('erro',(err)=>{
   console.log('==> RUN: Erro: '+err)
