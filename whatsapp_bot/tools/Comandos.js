@@ -13,7 +13,7 @@ import { delay } from "../bot.js";
 import { convertToFigura, convertToFiguraAnim, removerArquivo } from "./stickers.js";
 import { adicionar, remover, isMuted } from "./usuarios.js";
 import { criarLembrete, listarPendentesDoUsuario, cancelarLembrete } from './lembretes.js';
-import { parseTempo } from './utils.js';
+import { parseTempo, formatarDataBR } from './utils.js';
 
 export const Commands = {
     menu: async (ctx) => {
@@ -352,7 +352,7 @@ export const Commands = {
         const dispararEm = new Date(Date.now() + ms);
         const id = await criarLembrete(ctx.jid, ctx.msg.key.remoteJid, texto, dispararEm);
         await ctx.responderTexto(
-            `⏰ Lembrete #${id} criado! Vou te avisar em ${tempoStr} (${dispararEm.toLocaleString('pt-BR')})`
+            `⏰ Lembrete #${id} criado! Vou te avisar em ${tempoStr} (${formatarDataBR(dispararEm)})`
         );
     },
     lembretes: async (ctx) => {
@@ -362,7 +362,7 @@ export const Commands = {
             return;
         }
         const lista = pendentes
-            .map((l) => `#${l.id} — ${l.texto} (${new Date(l.disparar_em).toLocaleString('pt-BR')})`)
+            .map((l) => `#${l.id} — ${l.texto} (${formatarDataBR(new Date(l.disparar_em))})`)
             .join('\n');
         await ctx.responderTexto(`Seus lembretes:\n${lista}`);
     },

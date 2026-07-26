@@ -8,3 +8,7 @@ export function parseTempo(str) {
 
   return valor * multiplicadores[unidade];
 }
+
+export function formatarDataBR(data, fuso = 'America/Sao_Paulo') {
+  return data.toLocaleString('pt-BR', { timeZone: fuso });
+}
