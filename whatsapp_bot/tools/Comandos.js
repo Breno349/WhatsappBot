@@ -62,9 +62,9 @@ export const Commands = {
             if(ctx.config.autoreact) await ctx.responderReact( '👎' )
             return;
         };
+        if(ctx.args.length>0) await ctx.editarTexto(ctx.args.join(" "))
         const tipo = ctx.quotedTipo;
         if(tipo == 'imageMessage'){
-            if(ctx.args.length>0) await ctx.editarTexto(ctx.args.join(" "))
             const legenda = ctx.quoted[tipo].caption ?? ''
             const caminho = await ctx.baixar(true)
             if(caminho){
@@ -76,7 +76,7 @@ export const Commands = {
                 //if(ctx.config.autoreact) await ctx.responderReact( '👎' )
             }
         } else if(tipo == 'videoMessage'){
-            if(ctx.args.length>0) await ctx.editarTexto(ctx.args.join(" "))
+            //if(ctx.args.length>0) await ctx.editarTexto(ctx.args.join(" "))
             const legenda = ctx.quoted[tipo].caption ?? ''
             const caminho = await ctx.baixar(true)
             if(caminho){
