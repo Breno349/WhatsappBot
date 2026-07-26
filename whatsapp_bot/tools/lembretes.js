@@ -20,6 +20,10 @@ async function init() {
   tabelaGarantida = true;
 }
 
+export async function apagarLembrete(id) {
+  await pool.query(`DELETE FROM lembretes WHERE id = $1`, [id]);
+}
+
 export async function criarLembrete(jid, remoteJid, texto, dispararEm, criadoPorNome, paraOutraPessoa = false) {
   await init();
   const { rows } = await pool.query(

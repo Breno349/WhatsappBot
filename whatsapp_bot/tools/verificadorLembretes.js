@@ -7,10 +7,10 @@ export function iniciarVerificadorLembretes(sock) {
       const pendentes = await buscarPendentesVencidos();
       for (const lembrete of pendentes) {
           const texto = lembrete.para_outra_pessoa
-            ? `[*${lembrete.criado_por_nome}*] ${lembrete.texto}`
-            : `${lembrete.texto}`;
+            ? `*[⏰ ${lembrete.criado_por_nome}]* ${lembrete.texto}`
+            : `⏰ ${lembrete.texto}`;
           await sock.sendMessage(lembrete.remote_jid, { text: texto });
-          await marcarEnviado(lembrete.id);
+          await apagarLembrete(lembrete.id);
       }
     } catch (erro) {
       console.log('Erro ao verificar lembretes:', erro.message);
