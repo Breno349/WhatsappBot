@@ -1,4 +1,5 @@
 import { iniciarBot, fecharBot,Bot } from './bot.js';
+import { sendTelegramMessage } from './tools/telegram.js'
 
 export let running = false;
 
@@ -6,6 +7,7 @@ Bot.on('status',(stt)=>{
   console.log('==> RUN: Status: '+stt)
   if(stt ==='conectado'){
     running = true;
+    sendTelegramMessage("Conectado",process.env.TELEGRAM_CHATID)
   } else {
     running = false;
   }
