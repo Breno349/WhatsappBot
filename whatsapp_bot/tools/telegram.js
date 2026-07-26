@@ -1,4 +1,4 @@
-const axios = require('axios');
+import axios from 'axios'
 
 const TIMEOUT_MS = 8000;
 const MAX_RETRIES = 3;
@@ -39,7 +39,7 @@ async function withRetry(fn, maxRetries = MAX_RETRIES) {
     throw ultimoErro;
 }
 
-async function sendTelegramMessage(mensagem, chat_id) {
+export async function sendTelegramMessage(mensagem, chat_id) {
     try {
         await withRetry(() =>
             axios.post(
@@ -57,7 +57,7 @@ async function sendTelegramMessage(mensagem, chat_id) {
     }
 }
 
-async function checkBotStatus() {
+export async function checkBotStatus() {
     try {
         const response = await withRetry(() =>
             axios.get(
@@ -92,9 +92,3 @@ async function checkBotStatus() {
         };
     }
 }
-
-module.exports = {
-    sendTelegramMessage,
-    checkBotStatus,
-    escapeMarkdownV2
-};
