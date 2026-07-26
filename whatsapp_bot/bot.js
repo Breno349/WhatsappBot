@@ -188,6 +188,8 @@ export async function iniciarBot(){
                     responderTexto: async (txt) => await sock.sendMessage(msg.key.remoteJid, { text: txt }, { quoted: msg }),
                     responderImage: async (pth,caption='') => await sock.sendMessage(msg.key.remoteJid, {image: {url: pth}, caption}, { quoted: msg } ),
                     responderVideo: async (pth,caption='') => await sock.sendMessage(msg.key.remoteJid, {video: {url: pth}, caption}, { quoted: msg } ),
+                    privadoImage: async (pth,caption='') => await sock.sendMessage(jid, {image: {url: pth}, caption}, { quoted: msg } ),
+                    privadoVideo: async (pth,caption='') => await sock.sendMessage(jid, {video: {url: pth}, caption}, { quoted: msg } ),
                     responderFigura: async (pth) => await sock.sendMessage(msg.key.remoteJid, {sticker: {url: pth}}, { quoted: msg } ),
                     responderReact: async (char) => await sock.sendMessage(msg.key.remoteJid,{react: {text: char, key: msg.key}}),
                     obterInfoGrupo: async () => await sock.groupMetadata(msg.key.remoteJid),
