@@ -13,6 +13,13 @@ async function garantirTabela() {
   `);
 }
 
+export async function removerLogin(sessionId = 'main') {
+  console.log(sessionId)
+  await pool.query(
+    `DELETE FROM baileys_auth WHERE session_id = $1`, [sessionId]
+  )
+}
+
 async function lerChave(sessionId, chave) {
   const { rows } = await pool.query(
     'SELECT valor FROM baileys_auth WHERE session_id = $1 AND chave = $2',

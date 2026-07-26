@@ -1,5 +1,7 @@
-import { iniciarBot, fecharBot,Bot } from './bot.js';
+import { iniciarBot, fecharBot, Bot } from './bot.js';
+import { removerLogin } from './tools/pgAuthState.js';
 import { sendTelegramMessage } from './tools/telegram.js'
+import fs from 'fs'
 
 export let running = false;
 let avisado = false;
@@ -14,7 +16,17 @@ Bot.on('status',async (stt)=>{
     }
   } else if(stt === 'deslogado'){
     if(running){
-      await sendTelegramMessage("⛔️ Bot Desconectado",process.env.TELEGRAM_CHATID)
+      await sendTelegramMessage("⛔️ Bot Deslogado pelo WPP",process.env.TELEGRAM_CHATID)
+    } else {
+      if(process.env.SESSION_MODE == 'file'){
+        await fs.promises.unlink( process.env.SESSION_NAME )
+        //await iniciarBot()
+      } else if(process.env.SESSION_MODE == 'db'){
+        await removerLogin(process.env.SESSION_NAME)
+        //await iniciarBot()
+      }
+      console.log('Removido a sessão')
+      await sendTelegramMessage("🗑️ A sessão foi apagada",process.env.TELEGRAM_CHATID)
     }
     running = false;
   } else {

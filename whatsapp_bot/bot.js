@@ -4,17 +4,37 @@ import pino from 'pino';
 import { EventEmitter } from 'events';
 import { config } from "./tools/config.js";
 import { Commands } from './tools/Comandos.js';
-import { usePostgresAuthState } from './tools/pgAuthState.js'
+import { usePostgresAuthState, removerLogin } from './tools/pgAuthState.js'
 import os from 'os'
 import path from 'path'
 import fs from 'fs'
 import { isMuted } from './tools/usuarios.js';
+import { listarLembrete, removerLembrete } from './tools/lembretes.js';
 
 export const Bot = new EventEmitter();
 let sock = null;
 let saveCredsGlobal = null;
 
 export const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+async function tratarLembretes(sock){
+    await setInterval(async () => {
+        try {
+            if(!sock || !sock.sendMessage){
+                console.log('Sock inválido')
+                return;
+            }
+            const notas = await listarLembrete(null,true)
+            for(const nota of notas){
+                await sock.sendMessage(nota.para, { text: `${nota.texto}\n> Mensagem Programada` })
+                if(nota.de !== nota.para) await sock.sendMessage(nota.de, { text: `Lembrete: [#${nota.id}] Enviada` })
+                await removerLembrete(nota.id)
+            }
+        } catch (erro){
+            console.log('Erro ao tratar lembretes: '+erro.message)
+        }
+    }, 3*1000);
+}
 
 // tratar de executar comandos paralelamente
 const execucoesAtivas = new Map();
@@ -117,7 +137,8 @@ export async function iniciarBot(){
             auth: state,
             browser: Browsers.ubuntu("Chrome"),
             logger: pino({level:'silent'}),
-            version: version
+            version: version,
+            syncFullHistory: false
         });
         sock.ev.on('connection.update', async (update) => {
             const { connection, lastDisconnect, qr } = update;
@@ -163,6 +184,7 @@ export async function iniciarBot(){
             } else if(connection === 'open') {
                 //console.log('opened connection')
                 Bot.emit('status', 'conectado')
+                tratarLembretes(sock)
             }
         })
         sock.ev.on('creds.update', saveCreds)
@@ -186,6 +208,7 @@ export async function iniciarBot(){
                     nome, jid, tipo, args, msg, isBot, isGrupo, isQuoted, isView, quoted, quotedTipo, config, mencionados,
                     baixar: async (aMarcada = false) => await baixar(msg,aMarcada),
                     responderTexto: async (txt) => await sock.sendMessage(msg.key.remoteJid, { text: txt }, { quoted: msg }),
+                    editarTexto: async (txt) => await sock.sendMessage(msg.key.remoteJid, { text: txt, edit: msg.key }),
                     responderImage: async (pth,caption='') => await sock.sendMessage(msg.key.remoteJid, {image: {url: pth}, caption}, { quoted: msg } ),
                     responderVideo: async (pth,caption='') => await sock.sendMessage(msg.key.remoteJid, {video: {url: pth}, caption}, { quoted: msg } ),
                     privadoImage: async (pth,caption='') => await sock.sendMessage(jid, {image: {url: pth}, caption}, { quoted: msg } ),

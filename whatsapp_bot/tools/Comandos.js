@@ -9,8 +9,10 @@ if(!ctx.isBot){
 */
 
 import { delay } from "../bot.js";
+import { adicionarLembrete, listarLembrete, removerLembrete } from "./lembretes.js";
 import { convertToFigura, convertToFiguraAnim, removerArquivo } from "./stickers.js";
 import { adicionar, remover, isMuted } from "./usuarios.js";
+import { formatarData } from "./utils.js";
 
 export const Commands = {
     menu: async (ctx) => {
@@ -19,14 +21,12 @@ export const Commands = {
         if(ctx.config.autoreact) await ctx.responderReact( '👍' )
         await ctx.responderTexto(opcoes)
     },
-    
     ver: async (ctx) => {
         if(!ctx.isBot){
             if(ctx.config.autoreact) await ctx.responderReact( '🚫' )
             return;
         }
         if(!ctx.isQuoted || !ctx.isView){
-            if(ctx.config.autoreact) await ctx.responderReact( '👎' )
             return;
         };
         const tipo = ctx.quotedTipo;
@@ -34,23 +34,19 @@ export const Commands = {
             const legenda = ctx.quoted[tipo].caption ?? ''
             const caminho = await ctx.baixar(true)
             if(caminho){
-                if(ctx.config.autoreact) await ctx.responderReact( '👍' )
                 await ctx.responderImage( caminho,legenda )
                 await remover(caminho)
             } else {
                 console.log('VER: Erro ao baixar imagem')
-                if(ctx.config.autoreact) await ctx.responderReact( '👎' )
             }
         } else if(tipo == 'videoMessage'){
             const legenda = ctx.quoted[tipo].caption ?? ''
             const caminho = await ctx.baixar(true)
             if(caminho){
-                if(ctx.config.autoreact) await ctx.responderReact( '👍' )
                 await ctx.responderVideo( caminho,legenda )
                 await remover(caminho)
             } else {
                 console.log('VER: Erro ao baixar video')
-                if(ctx.config.autoreact) await ctx.responderReact( '👎' )
             }
         }
     },
@@ -60,31 +56,27 @@ export const Commands = {
             return;
         }
         if(!ctx.isQuoted || !ctx.isView){
-            if(ctx.config.autoreact) await ctx.responderReact( '👎' )
             return;
         };
+        if(ctx.args.length>0) await ctx.editarTexto(ctx.args.join(" "))
         const tipo = ctx.quotedTipo;
         if(tipo == 'imageMessage'){
             const legenda = ctx.quoted[tipo].caption ?? ''
             const caminho = await ctx.baixar(true)
             if(caminho){
-                if(ctx.config.autoreact) await ctx.responderReact( '👍' )
                 await ctx.privadoImage( caminho,legenda )
                 await remover(caminho)
             } else {
                 console.log('VER: Erro ao baixar imagem')
-                if(ctx.config.autoreact) await ctx.responderReact( '👎' )
             }
         } else if(tipo == 'videoMessage'){
             const legenda = ctx.quoted[tipo].caption ?? ''
             const caminho = await ctx.baixar(true)
-            if(caminho){
-                if(ctx.config.autoreact) await ctx.responderReact( '👍' )
+            if(caminho){       
                 await ctx.privadoVideo( caminho,legenda )
                 await remover(caminho)
             } else {
                 console.log('VER: Erro ao baixar video')
-                if(ctx.config.autoreact) await ctx.responderReact( '👎' )
             }
         }
     },
@@ -342,10 +334,97 @@ export const Commands = {
                 await ctx.removerPessoaAoGrupo(jid)
             }
         }
-    }
+    },
+
+    addnota: async (ctx) => {
+        if(!ctx.isBot || ctx.isGrupo){
+            if(ctx.config.autoreact) await ctx.responderReact( '🚫' )
+            return;
+        }
+        // show é o bot e é no privado
+        const quando = formatarData((ctx.args[0] ?? null))
+        if(quando){
+            const para = (ctx.args[1] ?? null)
+            if(!para){
+                if(ctx.config.autoreact) await ctx.responderReact( '👎' )
+                return;
+            }
+            if(/^(\(?\d{2}\)?\s?)?(9\d{4}-?\d{4})$/.test(para) && ctx.args[2]){
+                const para_jid = `55${para}@s.whatsapp.net`
+                const [result] = await ctx.verificarPessoa(para_jid)
+                if(result && result.exists){
+                    const texto = ctx.args.slice(2).join(' ')
+                    const {id,tempo} = await adicionarLembrete(ctx.msg.key.remoteJid,para_jid,quando,texto)
+                    if(id){
+                        if(ctx.config.autoreact) await ctx.responderReact( '⏰' )
+                        await ctx.responderTexto(`Lembrete [#${id}] (${tempo})\n> ${texto}`)
+                    } else {
+                        if(ctx.config.autoreact) await ctx.responderReact( '⚠️' )        
+                    }
+                } else {
+                    if(ctx.config.autoreact) await ctx.responderReact( '🤷‍♂️' )
+                }
+            } else if(ctx.args[1]){
+                const texto = ctx.args.slice(1).join(' ')
+                const {id,tempo} = await adicionarLembrete(ctx.msg.key.remoteJid,ctx.msg.key.remoteJid,quando,texto)
+                if(id){
+                    if(ctx.config.autoreact) await ctx.responderReact( '⏰' )
+                    await ctx.responderTexto(`Lembrete [#${id}] (${tempo})\n> ${texto}`)
+                } else {
+                    if(ctx.config.autoreact) await ctx.responderReact( '⚠️' )        
+                }
+            } else {
+                if(ctx.config.autoreact) await ctx.responderReact( '👎' )
+            }
+        } else {
+            if(ctx.config.autoreact) await ctx.responderReact( '👎' )
+        }
+    },
+    remnota: async (ctx) => {
+        if(!ctx.isBot || ctx.isGrupo){
+            if(ctx.config.autoreact) await ctx.responderReact( '🚫' )
+            return;
+        }
+        // show é o bot e é no privado
+        const id = ctx.args[0] ?? null
+        if(!id){
+            if(ctx.config.autoreact) await ctx.responderReact( '👎' )
+            return
+        }
+        if(/^\d+$/.test(id)){
+            const apagado = await removerLembrete( id )
+            if(apagado){
+                if(ctx.config.autoreact) await ctx.responderReact( '👍' )
+            } else {
+                if(ctx.config.autoreact) await ctx.responderReact( '🤷‍♂️' )
+            }
+        } else if(id === 'all'){
+            const apagado = await removerLembrete( id, true )
+            if(apagado){
+                if(ctx.config.autoreact) await ctx.responderReact( '👍' )
+            } else {
+                if(ctx.config.autoreact) await ctx.responderReact( '🤷‍♂️' )
+            }
+        } else {
+            if(ctx.config.autoreact) await ctx.responderReact( '👎' )
+            return
+        }
+    },
+    notas: async (ctx) => {
+        if(!ctx.isBot || ctx.isGrupo){
+            if(ctx.config.autoreact) await ctx.responderReact( '🚫' )
+            return;
+        }
+        // show é o bot e é no privado
+        const notas = await listarLembrete( ctx.msg.key.remoteJid )
+        const validas = notas.filter(item => !item.enviado).map(item => `#[${item.id}] ${(item.de===item.para)? '_(min)_' : '_(outro)_'} (${item.gatilho.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })})\n> ${item.texto}\n`)
+        if(validas.length > 0){
+            await ctx.responderTexto(`⏰ Lembretes:\n\n${validas.join('\n')}`)
+        } else {
+            if(ctx.config.autoreact) await ctx.responderReact( '🤷‍♂️' )
+        }
+    },
 }
-
-
 
 Commands.menu.desc = "Mostrar comandos"
 Commands.ping.desc = "Testar delay"
