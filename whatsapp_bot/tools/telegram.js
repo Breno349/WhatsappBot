@@ -91,4 +91,4 @@ export async function checkBotStatus() {
             message: `Erro ao verificar bot (após retries): ${erro.message}`,
         };
     }
-
+}
