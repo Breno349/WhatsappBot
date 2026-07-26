@@ -342,32 +342,44 @@ export const Commands = {
         let destinoJid = ctx.msg.key.remoteJid;
         let paraOutraPessoa = false;
         let argsTexto = ctx.args.slice(1);
+
+        const matchNumero = argsTexto[0]?.match(/^@?(\d{11,13})$/);
+
         if (ctx.isGroup && ctx.mencionados.length > 0) {
             destinoJid = ctx.mencionados[0];
             paraOutraPessoa = true;
             argsTexto = argsTexto.join(' ').replace(/@\d+/g, '').trim().split(' ');
-        } else if (!ctx.isGroup && /^\d{11,13}$/.test(argsTexto[0])) {
-            const numero = argsTexto.shift();
-            destinoJid = `55${numero}@s.whatsapp.net`;
+        } else if (!ctx.isGroup && matchNumero) {
+            argsTexto.shift();
+            destinoJid = `55${matchNumero[1]}@s.whatsapp.net`;
             paraOutraPessoa = true;
-            console.log("Verificando se existe: "+destinoJid)
-            const [result] = await ctx.verificarPessoa(destinoJid)
-            console.log(result)
-            if(!result.exists){
-                if(ctx.config.autoreact) await ctx.responderReact( '🤷‍♂️' )
+
+            try {
+                const [result] = await ctx.verificarPessoa(destinoJid);
+                if (!result?.exists) {
+                    if (ctx.config.autoreact) await ctx.responderReact('🤷‍♂️');
+                    return;
+                }
+            } catch (erro) {
+                console.log('Erro ao verificar número:', erro.message);
+                if (ctx.config.autoreact) await ctx.responderReact('⚠️');
                 return;
             }
         }
+
         const texto = argsTexto.join(' ').trim();
+
         if (!tempoStr || !texto) {
             if (ctx.config.autoreact) await ctx.responderReact('👎');
             return;
         }
+
         const ms = parseTempo(tempoStr);
         if (!ms) {
             if (ctx.config.autoreact) await ctx.responderReact('👎');
             return;
         }
+
         const dispararEm = new Date(Date.now() + ms);
         const id = await criarLembrete(ctx.jid, destinoJid, texto, dispararEm, ctx.nome, paraOutraPessoa);
         if (ctx.config.autoreact) await ctx.responderReact('⏰');
