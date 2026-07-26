@@ -342,20 +342,20 @@ export const Commands = {
         let destinoJid = ctx.msg.key.remoteJid;
         let paraOutraPessoa = false;
         let argsTexto = ctx.args.slice(1);
+
         const matchNumero = argsTexto[0]?.match(/^@?(\d{11,13})$/);
-        if (ctx.isGrupo && ctx.mencionados.length > 0) {
-            destinoJid = ctx.mencionados[0];
-            paraOutraPessoa = true;
-            argsTexto = argsTexto.join(' ').replace(/@\d+/g, '').trim().split(' ');
-        } else if (!ctx.isGrupo && matchNumero) {
+
+        if (!ctx.isGrupo && matchNumero) {
             argsTexto.shift();
             destinoJid = `55${matchNumero[1]}@s.whatsapp.net`;
             paraOutraPessoa = true;
         }
+
         if (paraOutraPessoa && !ctx.isBot) {
             if (ctx.config.autoreact) await ctx.responderReact('🚫');
             return;
         }
+
         if (paraOutraPessoa) {
             try {
                 const [result] = await ctx.verificarPessoa(destinoJid);
@@ -369,16 +369,20 @@ export const Commands = {
                 return;
             }
         }
+
         const texto = argsTexto.join(' ').trim();
+
         if (!tempoStr || !texto) {
             if (ctx.config.autoreact) await ctx.responderReact('👎');
             return;
         }
+
         const ms = parseTempo(tempoStr);
         if (!ms) {
             if (ctx.config.autoreact) await ctx.responderReact('👎');
             return;
         }
+
         const dispararEm = new Date(Date.now() + ms);
         const id = await criarLembrete(ctx.jid, destinoJid, texto, dispararEm, ctx.nome, paraOutraPessoa);
         if (ctx.config.autoreact) await ctx.responderReact('⏰');

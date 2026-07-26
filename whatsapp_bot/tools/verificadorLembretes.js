@@ -18,7 +18,6 @@ export function iniciarVerificadorLembretes(sock) {
           : `⏰ ${lembrete.texto}`;
 
         await sock.sendMessage(lembrete.remote_jid, { text: texto });
-        if(lembrete.para_outra_pessoa) await sock.sendMessage(lembrete.jid, { text: `Lembrete enviado: [${lembrete.criado_por_nome}] ${lembrete.texto}` })
         await apagarLembrete(lembrete.id);
       } catch (erro) {
         console.log(`Erro ao processar lembrete #${lembrete.id}:`, erro.message);
