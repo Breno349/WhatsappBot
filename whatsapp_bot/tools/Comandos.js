@@ -369,4 +369,4 @@ Commands.mutar.desc = "Impedir comandos"
 Commands.mutar.admin = true
 Commands.desmutar.desc = "Desfazer mutar"
 Commands.desmutar.admin = true
-Commands.piada.desc = "Buscar piada ruinha"
+Commands.piada.desc = "Buscar piada ruim"
