@@ -19,40 +19,7 @@ export const Commands = {
         if(ctx.config.autoreact) await ctx.responderReact( '👍' )
         await ctx.responderTexto(opcoes)
     },
-    verpv: async (ctx) => {
-        if(!ctx.isBot){
-            if(ctx.config.autoreact) await ctx.responderReact( '🚫' )
-            return;
-        }
-        if(!ctx.isQuoted || !ctx.isView){
-            if(ctx.config.autoreact) await ctx.responderReact( '👎' )
-            return;
-        };
-        const tipo = ctx.quotedTipo;
-        if(tipo == 'imageMessage'){
-            const legenda = ctx.quoted[tipo].caption ?? ''
-            const caminho = await ctx.baixar(true)
-            if(caminho){
-                if(ctx.config.autoreact) await ctx.responderReact( '👍' )
-                await ctx.privadoImage( caminho,legenda )
-                await remover(caminho)
-            } else {
-                console.log('VER: Erro ao baixar imagem')
-                if(ctx.config.autoreact) await ctx.responderReact( '👎' )
-            }
-        } else if(tipo == 'videoMessage'){
-            const legenda = ctx.quoted[tipo].caption ?? ''
-            const caminho = await ctx.baixar(true)
-            if(caminho){
-                if(ctx.config.autoreact) await ctx.responderReact( '👍' )
-                await ctx.privadoVideo( caminho,legenda )
-                await remover(caminho)
-            } else {
-                console.log('VER: Erro ao baixar video')
-                if(ctx.config.autoreact) await ctx.responderReact( '👎' )
-            }
-        }
-    },
+    
     ver: async (ctx) => {
         if(!ctx.isBot){
             if(ctx.config.autoreact) await ctx.responderReact( '🚫' )
@@ -80,6 +47,40 @@ export const Commands = {
             if(caminho){
                 if(ctx.config.autoreact) await ctx.responderReact( '👍' )
                 await ctx.responderVideo( caminho,legenda )
+                await remover(caminho)
+            } else {
+                console.log('VER: Erro ao baixar video')
+                if(ctx.config.autoreact) await ctx.responderReact( '👎' )
+            }
+        }
+    },
+    verpv: async (ctx) => {
+        if(!ctx.isBot){
+            if(ctx.config.autoreact) await ctx.responderReact( '🚫' )
+            return;
+        }
+        if(!ctx.isQuoted || !ctx.isView){
+            if(ctx.config.autoreact) await ctx.responderReact( '👎' )
+            return;
+        };
+        const tipo = ctx.quotedTipo;
+        if(tipo == 'imageMessage'){
+            const legenda = ctx.quoted[tipo].caption ?? ''
+            const caminho = await ctx.baixar(true)
+            if(caminho){
+                if(ctx.config.autoreact) await ctx.responderReact( '👍' )
+                await ctx.privadoImage( caminho,legenda )
+                await remover(caminho)
+            } else {
+                console.log('VER: Erro ao baixar imagem')
+                if(ctx.config.autoreact) await ctx.responderReact( '👎' )
+            }
+        } else if(tipo == 'videoMessage'){
+            const legenda = ctx.quoted[tipo].caption ?? ''
+            const caminho = await ctx.baixar(true)
+            if(caminho){
+                if(ctx.config.autoreact) await ctx.responderReact( '👍' )
+                await ctx.privadoVideo( caminho,legenda )
                 await remover(caminho)
             } else {
                 console.log('VER: Erro ao baixar video')
@@ -359,7 +360,7 @@ Commands.setgpdesc.desc = "Definir descrição do grupo"
 Commands.setgpdesc.admin = true
 Commands.setgpnome.desc = "Definir nome do grupo"
 Commands.setgpnome.admin = true
-Commands.addgp.desc = "Adiciona pessoa"
+Commands.addgp.desc = "Adicionar pessoa"
 Commands.addgp.admin = true
 Commands.remgp.desc = "Remover pessoa"
 Commands.remgp.admin = true
@@ -368,4 +369,3 @@ Commands.mutar.admin = true
 Commands.desmutar.desc = "Desfazer mutar"
 Commands.desmutar.admin = true
 Commands.piada.desc = "Buscar piada ruinha"
-//.mutar.adminandos"pedir comandos"
