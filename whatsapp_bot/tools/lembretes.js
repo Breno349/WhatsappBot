@@ -12,17 +12,20 @@ async function init() {
       texto TEXT NOT NULL,
       disparar_em TIMESTAMPTZ NOT NULL,
       enviado BOOLEAN NOT NULL DEFAULT false,
-      criado_em TIMESTAMPTZ NOT NULL DEFAULT now()
+      criado_em TIMESTAMPTZ NOT NULL DEFAULT now(),
+      criado_por_nome TEXT,
+      para_outra_pessoa BOOLEAN NOT NULL DEFAULT false
     );
   `);
   tabelaGarantida = true;
 }
 
-export async function criarLembrete(jid, remoteJid, texto, dispararEm) {
+export async function criarLembrete(jid, remoteJid, texto, dispararEm, criadoPorNome, paraOutraPessoa = false) {
   await init();
   const { rows } = await pool.query(
-    `INSERT INTO lembretes (jid, remote_jid, texto, disparar_em) VALUES ($1, $2, $3, $4) RETURNING id`,
-    [jid, remoteJid, texto, dispararEm]
+    `INSERT INTO lembretes (jid, remote_jid, texto, disparar_em, criado_por_nome, para_outra_pessoa)
+     VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+    [jid, remoteJid, texto, dispararEm, criadoPorNome, paraOutraPessoa]
   );
   return rows[0].id;
 }

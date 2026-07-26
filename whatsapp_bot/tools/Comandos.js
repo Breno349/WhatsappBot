@@ -337,25 +337,40 @@ export const Commands = {
         }
     },
 
-    lembrete: async (ctx) => {
+    addnota: async (ctx) => {
         const tempoStr = ctx.args[0];
-        const texto = ctx.args.slice(1).join(' ');
+        let destinoJid = ctx.msg.key.remoteJid;
+        let paraOutraPessoa = false;
+        let argsTexto = ctx.args.slice(1);
+        if (ctx.isGroup && ctx.mencionados.length > 0) {
+            destinoJid = ctx.mencionados[0];
+            paraOutraPessoa = true;
+            argsTexto = argsTexto.join(' ').replace(/@\d+/g, '').trim().split(' ');
+        } else if (!ctx.isGroup && /^\d{11,13}$/.test(argsTexto[0])) {
+            const numero = argsTexto.shift();
+            destinoJid = `55${numero}@s.whatsapp.net`;
+            paraOutraPessoa = true;
+            const result = await ctx.verificarPessoa(destinoJid)
+            if(!result.exists){
+                if(ctx.config.autoreact) await ctx.responderReact( '🤷‍♂️' )
+                return;
+            }
+        }
+        const texto = argsTexto.join(' ').trim();
         if (!tempoStr || !texto) {
-            if(ctx.config.autoreact) await ctx.responderReact( '👎' )
+            if (ctx.config.autoreact) await ctx.responderReact('👎');
             return;
         }
         const ms = parseTempo(tempoStr);
         if (!ms) {
-            if(ctx.config.autoreact) await ctx.responderReact( '👎' )
+            if (ctx.config.autoreact) await ctx.responderReact('👎');
             return;
         }
         const dispararEm = new Date(Date.now() + ms);
-        const id = await criarLembrete(ctx.jid, ctx.msg.key.remoteJid, texto, dispararEm);
-        await ctx.responderTexto(
-            `⏰ Lembrete #${id} criado! Vou te avisar em ${tempoStr} (${formatarDataBR(dispararEm)})`
-        );
+        const id = await criarLembrete(ctx.jid, destinoJid, texto, dispararEm, ctx.nome, paraOutraPessoa);
+        if (ctx.config.autoreact) await ctx.responderReact('⏰');
     },
-    lembretes: async (ctx) => {
+    notas: async (ctx) => {
         const pendentes = await listarPendentesDoUsuario(ctx.jid);
         if (pendentes.length === 0) {
             if(ctx.config.autoreact) await ctx.responderReact( '🤷‍♂️' )
@@ -366,17 +381,20 @@ export const Commands = {
             .join('\n');
         await ctx.responderTexto(`Seus lembretes:\n${lista}`);
     },
-    cancelarlembrete: async (ctx) => {
+    remnota: async (ctx) => {
         const id = parseInt(ctx.args[0], 10);
         if (!id) {
-            await ctx.replyText('Manda assim: .cancelarlembrete <numero>');
+            if(ctx.config.autoreact) await ctx.responderReact( '👎' )
             return;
         }
         const apagou = await cancelarLembrete(id, ctx.senderJid);
-        await ctx.responderReact(apagou ? `Lembrete #${id} cancelado.` : `Não encontrei esse lembrete (ou não é seu).`);
+        if(apagou){
+            if(ctx.config.autoreact) await ctx.responderReact( '👍' )
+        } else {
+            if(ctx.config.autoreact) await ctx.responderReact( '🤷‍♂️' )
+        }
     },
 }
-
 
 
 Commands.menu.desc = "Mostrar comandos"
@@ -401,3 +419,6 @@ Commands.mutar.admin = true
 Commands.desmutar.desc = "Desfazer mutar"
 Commands.desmutar.admin = true
 Commands.piada.desc = "Buscar piada ruim"
+Commands.piada.addnota = "Adionar lembrete"
+Commands.piada.remnota = "Remover lembrete"
+Commands.piada.notas = "Listar lembretes"
