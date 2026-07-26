@@ -2,12 +2,22 @@ import { iniciarBot, fecharBot,Bot } from './bot.js';
 import { sendTelegramMessage } from './tools/telegram.js'
 
 export let running = false;
+let avisado = false;
 
 Bot.on('status',(stt)=>{
   console.log('==> RUN: Status: '+stt)
   if(stt ==='conectado'){
     running = true;
-    sendTelegramMessage("✔️ Bot Conectado",process.env.TELEGRAM_CHATID)
+    if(!avisado){
+      sendTelegramMessage("✔️ Bot Conectado",process.env.TELEGRAM_CHATID)
+      avisado = true;
+    }
+  } else if(stt === 'deslogado'){
+    if(!avisado && running){
+      sendTelegramMessage("⛔️ Bot Desconectado",process.env.TELEGRAM_CHATID)
+      avisado = true;
+    }
+    running = false;
   } else {
     running = false;
   }
