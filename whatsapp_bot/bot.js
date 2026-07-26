@@ -9,7 +9,6 @@ import os from 'os'
 import path from 'path'
 import fs from 'fs'
 import { isMuted } from './tools/usuarios.js';
-import { iniciarVerificadorLembretes } from './tools/verificadorLembretes.js'
 
 export const Bot = new EventEmitter();
 let sock = null;
@@ -164,7 +163,6 @@ export async function iniciarBot(){
             } else if(connection === 'open') {
                 //console.log('opened connection')
                 Bot.emit('status', 'conectado')
-                iniciarVerificadorLembretes(() => sock)
             }
         })
         sock.ev.on('creds.update', saveCreds)
@@ -188,7 +186,6 @@ export async function iniciarBot(){
                     nome, jid, tipo, args, msg, isBot, isGrupo, isQuoted, isView, quoted, quotedTipo, config, mencionados,
                     baixar: async (aMarcada = false) => await baixar(msg,aMarcada),
                     responderTexto: async (txt) => await sock.sendMessage(msg.key.remoteJid, { text: txt }, { quoted: msg }),
-                    editarTexto: async (txt) => await sock.sendMessage(msg.key.remoteJid, { text: txt, edit: msg.key }),
                     responderImage: async (pth,caption='') => await sock.sendMessage(msg.key.remoteJid, {image: {url: pth}, caption}, { quoted: msg } ),
                     responderVideo: async (pth,caption='') => await sock.sendMessage(msg.key.remoteJid, {video: {url: pth}, caption}, { quoted: msg } ),
                     privadoImage: async (pth,caption='') => await sock.sendMessage(jid, {image: {url: pth}, caption}, { quoted: msg } ),

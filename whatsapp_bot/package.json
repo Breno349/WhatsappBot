@@ -1,7 +1,7 @@
 {
   "name": "whatsapp_bot",
   "version": "1.0.0",
-  "description": "Bot de WhatsApp com alguns comandos básicos",
+  "description": "",
   "main": "index.js",
   "type": "module",
   "scripts": {
@@ -9,19 +9,9 @@
     "bot": "node run.js",
     "start": "node index.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Breno349/WhatsappBot.git"
-  },
-  "keywords": [
-    "WhatsappBot"
-  ],
-  "author": "Breno Serra",
+  "keywords": [],
+  "author": "",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/Breno349/WhatsappBot/issues"
-  },
-  "homepage": "https://github.com/Breno349/WhatsappBot#readme",
   "dependencies": {
     "@whiskeysockets/baileys": "^7.0.0-rc13",
     "child_process": "^1.0.2",
