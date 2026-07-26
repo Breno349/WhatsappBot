@@ -42,10 +42,6 @@ export async function buscarPendentesVencidos() {
   return rows;
 }
 
-export async function marcarEnviado(id) {
-  await pool.query(`UPDATE lembretes SET enviado = true WHERE id = $1`, [id]);
-}
-
 export async function listarPendentesDoUsuario(jid) {
   await init();
   const { rows } = await pool.query(

@@ -12,7 +12,7 @@ if(!ctx.isBot){
 import { delay } from "../bot.js";
 import { convertToFigura, convertToFiguraAnim, removerArquivo } from "./stickers.js";
 import { adicionar, remover, isMuted } from "./usuarios.js";
-import { criarLembrete, listarPendentesDoUsuario, cancelarLembrete, apagarLembrete } from './lembretes.js';
+import { criarLembrete, listarPendentesDoUsuario, cancelarLembrete } from './lembretes.js';
 import { parseTempo, formatarDataBR } from './utils.js';
 
 export const Commands = {
@@ -343,11 +343,11 @@ export const Commands = {
         let paraOutraPessoa = false;
         let argsTexto = ctx.args.slice(1);
         const matchNumero = argsTexto[0]?.match(/^@?(\d{11,13})$/);
-        if (ctx.isGroup && ctx.mencionados.length > 0) {
+        if (ctx.isGrupo && ctx.mencionados.length > 0) {
             destinoJid = ctx.mencionados[0];
             paraOutraPessoa = true;
             argsTexto = argsTexto.join(' ').replace(/@\d+/g, '').trim().split(' ');
-        } else if (!ctx.isGroup && matchNumero) {
+        } else if (!ctx.isGrupo && matchNumero) {
             argsTexto.shift();
             destinoJid = `55${matchNumero[1]}@s.whatsapp.net`;
             paraOutraPessoa = true;
@@ -397,14 +397,14 @@ export const Commands = {
     remnota: async (ctx) => {
         const id = parseInt(ctx.args[0], 10);
         if (!id) {
-            if(ctx.config.autoreact) await ctx.responderReact( '👎' )
+            if(ctx.config.autoreact) await ctx.responderReact('👎');
             return;
         }
-        const apagou = await apagarLembrete(id, ctx.senderJid);
+        const apagou = await cancelarLembrete(id, ctx.jid); // função certa + propriedade certa
         if(apagou){
-            if(ctx.config.autoreact) await ctx.responderReact( '👍' )
+            if(ctx.config.autoreact) await ctx.responderReact('👍');
         } else {
-            if(ctx.config.autoreact) await ctx.responderReact( '🤷‍♂️' )
+            if(ctx.config.autoreact) await ctx.responderReact('🤷‍♂️');
         }
     },
 }
