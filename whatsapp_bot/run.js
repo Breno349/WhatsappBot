@@ -7,7 +7,7 @@ Bot.on('status',(stt)=>{
   console.log('==> RUN: Status: '+stt)
   if(stt ==='conectado'){
     running = true;
-    sendTelegramMessage("Conectado",process.env.TELEGRAM_CHATID)
+    sendTelegramMessage("✔️ Bot Conectado",process.env.TELEGRAM_CHATID)
   } else {
     running = false;
   }
