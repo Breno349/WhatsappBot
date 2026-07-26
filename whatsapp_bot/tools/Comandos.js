@@ -14,7 +14,7 @@ import { adicionar, remover, isMuted } from "./usuarios.js";
 
 export const Commands = {
     menu: async (ctx) => {
-        const cmds = Object.keys(Commands).map(item => `\`${config.prefixo}${item}\``)
+        const cmds = Object.keys(Commands).map(item => `\`${ctx.config.prefixo}${item}\``)
         const opcoes = `Comandos:\n\n${cmds.join('\n')}`
         await ctx.responderTexto(opcoes)
     },
