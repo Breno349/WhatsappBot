@@ -12,7 +12,7 @@ if(!ctx.isBot){
 import { delay } from "../bot.js";
 import { convertToFigura, convertToFiguraAnim, removerArquivo } from "./stickers.js";
 import { adicionar, remover, isMuted } from "./usuarios.js";
-import { criarLembrete, listarPendentesDoUsuario, cancelarLembrete } from './lembretes.js';
+import { criarLembrete, listarPendentesDoUsuario, cancelarLembrete, apagarLembrete } from './lembretes.js';
 import { parseTempo, formatarDataBR } from './utils.js';
 
 export const Commands = {
@@ -400,7 +400,7 @@ export const Commands = {
             if(ctx.config.autoreact) await ctx.responderReact( '👎' )
             return;
         }
-        const apagou = await cancelarLembrete(id, ctx.senderJid);
+        const apagou = await apagarLembrete(id, ctx.senderJid);
         if(apagou){
             if(ctx.config.autoreact) await ctx.responderReact( '👍' )
         } else {
