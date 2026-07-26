@@ -350,7 +350,9 @@ export const Commands = {
             const numero = argsTexto.shift();
             destinoJid = `55${numero}@s.whatsapp.net`;
             paraOutraPessoa = true;
-            const result = await ctx.verificarPessoa(destinoJid)
+            console.log("Verificando se existe: "+destinoJid)
+            const [result] = await ctx.verificarPessoa(destinoJid)
+            console.log(result)
             if(!result.exists){
                 if(ctx.config.autoreact) await ctx.responderReact( '🤷‍♂️' )
                 return;
