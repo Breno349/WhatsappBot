@@ -13,6 +13,40 @@ import { convertToFigura, convertToFiguraAnim, removerArquivo } from "./stickers
 import { adicionar, remover, isMuted } from "./usuarios.js";
 
 export const Commands = {
+    menu: async (ctx) => {
+        const cmds = Object.keys(Commands).map(item => `\`${item}\``)
+        const opcoes = `Comandos:\n\n${cmds.join('\n')}`
+        await ctx.responderTexto(opcoes)
+    },
+    verpv: async (ctx) => {
+        if(!ctx.isBot){
+            if(ctx.config.autoreact) await ctx.responderReact( '🚫' )
+            return;
+        }
+        if(!ctx.isQuoted) return;
+        const tipo = ctx.quotedTipo;
+        if(tipo == 'imageMessage'){
+            const legenda = ctx.quoted[tipo].caption ?? ''
+            const caminho = await ctx.baixar(true)
+            if(caminho){
+                if(ctx.config.autoreact) await ctx.responderReact( '👍' )
+                await ctx.privadoImage( caminho,legenda )
+                await remover(caminho)
+            } else {
+                console.log('VER: Erro ao baixar imagem')
+            }
+        } else if(tipo == 'videoMessage'){
+            const legenda = ctx.quoted[tipo].caption ?? ''
+            const caminho = await ctx.baixar(true)
+            if(caminho){
+                if(ctx.config.autoreact) await ctx.responderReact( '👍' )
+                await ctx.privadoVideo( caminho,legenda )
+                await remover(caminho)
+            } else {
+                console.log('VER: Erro ao baixar video')
+            }
+        }
+    },
     ver: async (ctx) => {
         if(!ctx.isBot){
             if(ctx.config.autoreact) await ctx.responderReact( '🚫' )
