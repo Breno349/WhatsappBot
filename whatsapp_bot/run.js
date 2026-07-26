@@ -23,11 +23,13 @@ Bot.on('status',async (stt)=>{
   }
 })
 Bot.on('code',(code)=>{
-  console.log('==> RUN: Code: ['+code+']')
+  //console.log('==> RUN: Code: ['+code+']')
+  await sendTelegramMessage(`⚠️ Bot requer código: [<tg-spoiler>${code}</tg-spoiler>]`, process.env.TELEGRAM_CHATID)
   running = false;
 })
 Bot.on('qrcode',(qrcode)=>{
-  console.log('==> RUN: QRCode:\n'+qrcode)
+  //console.log('==> RUN: QRCode:\n'+qrcode)
+  await sendTelegramMessage(`⚠️ Bot requer leitura do QRCode:\n${qrcode}`, process.env.TELEGRAM_CHATID)
   running = false;
 })
 Bot.on('erro',(err)=>{
