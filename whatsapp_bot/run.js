@@ -22,12 +22,12 @@ Bot.on('status',async (stt)=>{
     running = false;
   }
 })
-Bot.on('code',(code)=>{
+Bot.on('code',async (code)=>{
   //console.log('==> RUN: Code: ['+code+']')
   await sendTelegramMessage(`⚠️ Bot requer código: [<tg-spoiler>${code}</tg-spoiler>]`, process.env.TELEGRAM_CHATID)
   running = false;
 })
-Bot.on('qrcode',(qrcode)=>{
+Bot.on('qrcode',async (qrcode)=>{
   //console.log('==> RUN: QRCode:\n'+qrcode)
   await sendTelegramMessage(`⚠️ Bot requer leitura do QRCode:\n${qrcode}`, process.env.TELEGRAM_CHATID)
   running = false;
