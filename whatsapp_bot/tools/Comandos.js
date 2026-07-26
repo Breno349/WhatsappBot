@@ -14,8 +14,9 @@ import { adicionar, remover, isMuted } from "./usuarios.js";
 
 export const Commands = {
     menu: async (ctx) => {
-        const cmds = Object.keys(Commands).map(item => `\`${ctx.config.prefixo}${item}\``)
+        const cmds = Object.keys(Commands).map(item => `\`${ctx.config.prefixo}${item}\` _${Commands[item].desc ?? ''}_`)
         const opcoes = `Comandos:\n\n${cmds.join('\n')}`
+        if(ctx.config.autoreact) await ctx.responderReact( '👍' )
         await ctx.responderTexto(opcoes)
     },
     verpv: async (ctx) => {
@@ -23,7 +24,10 @@ export const Commands = {
             if(ctx.config.autoreact) await ctx.responderReact( '🚫' )
             return;
         }
-        if(!ctx.isQuoted) return;
+        if(!ctx.isQuoted || !ctx.isView){
+            if(ctx.config.autoreact) await ctx.responderReact( '👎' )
+            return;
+        };
         const tipo = ctx.quotedTipo;
         if(tipo == 'imageMessage'){
             const legenda = ctx.quoted[tipo].caption ?? ''
@@ -34,6 +38,7 @@ export const Commands = {
                 await remover(caminho)
             } else {
                 console.log('VER: Erro ao baixar imagem')
+                if(ctx.config.autoreact) await ctx.responderReact( '👎' )
             }
         } else if(tipo == 'videoMessage'){
             const legenda = ctx.quoted[tipo].caption ?? ''
@@ -44,6 +49,7 @@ export const Commands = {
                 await remover(caminho)
             } else {
                 console.log('VER: Erro ao baixar video')
+                if(ctx.config.autoreact) await ctx.responderReact( '👎' )
             }
         }
     },
@@ -52,7 +58,10 @@ export const Commands = {
             if(ctx.config.autoreact) await ctx.responderReact( '🚫' )
             return;
         }
-        if(!ctx.isQuoted) return;
+        if(!ctx.isQuoted || !ctx.isView){
+            if(ctx.config.autoreact) await ctx.responderReact( '👎' )
+            return;
+        };
         const tipo = ctx.quotedTipo;
         if(tipo == 'imageMessage'){
             const legenda = ctx.quoted[tipo].caption ?? ''
@@ -63,6 +72,7 @@ export const Commands = {
                 await remover(caminho)
             } else {
                 console.log('VER: Erro ao baixar imagem')
+                if(ctx.config.autoreact) await ctx.responderReact( '👎' )
             }
         } else if(tipo == 'videoMessage'){
             const legenda = ctx.quoted[tipo].caption ?? ''
@@ -73,6 +83,7 @@ export const Commands = {
                 await remover(caminho)
             } else {
                 console.log('VER: Erro ao baixar video')
+                if(ctx.config.autoreact) await ctx.responderReact( '👎' )
             }
         }
     },
@@ -332,3 +343,8 @@ export const Commands = {
         }
     }
 }
+
+
+
+Commands.menu.desc = "Mostrar comandos"
+Commands.ping.desc = "Testar delay"
