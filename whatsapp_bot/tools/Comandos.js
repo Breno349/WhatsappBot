@@ -352,9 +352,10 @@ export const Commands = {
             if(/^(\(?\d{2}\)?\s?)?(9\d{4}-?\d{4})$/.test(para) && ctx.args[2]){
                 const para_jid = `55${para}@s.whatsapp.net`
                 const [result] = await ctx.verificarPessoa(para_jid)
-                if(result && result.exists){
+                const para_lid = await ctx.obterLid(para_jid)
+                if(result && result.exists && para_lid){
                     const texto = ctx.args.slice(2).join(' ')
-                    const {id,tempo} = await adicionarLembrete(ctx.msg.key.remoteJid,para_jid,quando,texto)
+                    const {id,tempo} = await adicionarLembrete(ctx.msg.key.remoteJid,para_lid,quando,texto)
                     if(id){
                         if(ctx.config.autoreact) await ctx.responderReact( '⏰' )
                         await ctx.responderTexto(`Lembrete [#${id}] (${tempo})\n> ${texto}`)

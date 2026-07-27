@@ -26,6 +26,7 @@ async function tratarLembretes(sock){
             }
             const notas = await listarLembrete(null,true)
             for(const nota of notas){
+                if(nota.gatilho >= Date.now()) continue;
                 await sock.sendMessage(nota.para, { text: `${nota.texto}\n> Mensagem Programada` })
                 if(nota.de !== nota.para) await sock.sendMessage(nota.de, { text: `Lembrete: [#${nota.id}] Enviada` })
                 await removerLembrete(nota.id)
@@ -222,6 +223,7 @@ export async function iniciarBot(){
                     adiconarPessoaAoGrupo: async (njid,promov=false) => await sock.groupParticipantsUpdate(msg.key.remoteJid, [njid], !promov ? "add" : "promote"),
                     removerPessoaAoGrupo: async (njid) => await sock.groupParticipantsUpdate(msg.key.remoteJid, [njid], "remove" ),
                     verificarPessoa: async (njid) => await sock.onWhatsApp(njid),
+                    obterLid: async (jid) => await sock.signalRepository.lidMapping.getLIDForPN(jid),
                 };
                 executar(cmd, ctx)
             }
