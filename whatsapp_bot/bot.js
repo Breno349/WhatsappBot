@@ -1,62 +1,72 @@
-import makeWASocket, { DisconnectReason, downloadMediaMessage, Browsers, fetchLatestBaileysVersion, useMultiFileAuthState, getContentType } from '@whiskeysockets/baileys'
-import qrcode from 'qrcode-terminal'
-import pino from 'pino';
-import { EventEmitter } from 'events';
-import { config } from "./tools/config.js";
-import { Commands } from './tools/Comandos.js';
-import { usePostgresAuthState, removerLogin } from './tools/pgAuthState.js'
-import os from 'os'
-import path from 'path'
-import fs from 'fs'
-import { isMuted } from './tools/usuarios.js';
-import { listarLembrete, removerLembrete } from './tools/lembretes.js';
+import makeWASocket, { Browsers, DisconnectReason, downloadMediaMessage, fetchLatestBaileysVersion, getContentType, useMultiFileAuthState } from "@whiskeysockets/baileys"
+import { config } from "./tools/config.js"
+import { useDBAuth,deletarSessaoDB } from "./tools/useDBAuth.js"
+import qrcode from "qrcode-terminal"
+import pino from "pino"
+import { EventEmitter } from "events"
+import fs from "fs"
+import { validateCmd } from "./tools/usuarios.js"
+import { Commands } from "./comandos.js"
+import path from "path"
+import os from "os"
 
-export const Bot = new EventEmitter();
-let sock = null;
-let saveCredsGlobal = null;
-
-export const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-async function tratarLembretes(sock){
-    await setInterval(async () => {
-        try {
-            if(!sock || !sock.sendMessage){
-                console.log('Sock inválido')
-                return;
-            }
-            const notas = await listarLembrete(null,true)
-            for(const nota of notas){
-                if(nota.gatilho >= Date.now()) continue;
-                await sock.sendMessage(nota.para, { text: `${nota.texto}\n> Mensagem Programada` })
-                if(nota.de !== nota.para) await sock.sendMessage(nota.de, { text: `Lembrete: [#${nota.id}] Enviada` })
-                await removerLembrete(nota.id)
-            }
-        } catch (erro){
-            console.log('Erro ao tratar lembretes: '+erro.message)
-        }
-    }, 3*1000);
+export const Bot = {
+    sock: null,
+    event: new EventEmitter(),
+    start: async () => {
+        console.log('\x1b[32m%s\x1b[0m', '<<===  Conectando Bot ===>>')
+        return await startWA()
+    }
 }
 
-// tratar de executar comandos paralelamente
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+const ignoreTypes = ['pollUpdateMessage','senderKeyDistributionMessage']
+
+function dismembrerMessage( msg ){
+    const isGroup = msg.key.remoteJid.endsWith("@g.us")
+    const lid = isGroup ? msg.key.participant : msg.key.remoteJid;
+    const isBot = msg.key?.fromMe ?? false;
+    const msgType = Object.keys(msg.message)[0]
+    const conteudo = msg.message[msgType];
+    const text = msg.message?.conversation || conteudo?.text || conteudo?.caption || "";
+    const name = msg.pushName ?? null;
+    const contextInfo = conteudo?.contextInfo;
+    const isQuoted = Boolean(contextInfo?.quotedMessage)
+    const quotedMessage = isQuoted ? contextInfo.quotedMessage : null;
+    const quotedType = isQuoted ? Object.keys(quotedMessage)[0] : null;
+    const isView = isQuoted ? Boolean(quotedMessage[quotedType]?.viewOnce) : Boolean(conteudo?.viewOnce);
+    const quotedLid = isQuoted ? contextInfo?.participant : null;
+    const mentions = contextInfo?.mentionedJid ?? []
+
+    return {
+        text, name, lid, msgType, quotedLid, quotedMessage, quotedType, isBot, isGroup, isQuoted, isView, mentions
+    }
+}
+
 const execucoesAtivas = new Map();
 let proximoId = 1;
-function executar(nomeComando, ctx) {
+function executar(nomeComando, ctx, data) {
   const id = proximoId++;
-
   const promise = Promise.resolve()
-    .then(() => Commands[nomeComando](ctx))
+    .then(async () => {
+        if(data.exec){
+            await Commands[nomeComando].handler(ctx, data.args);
+        } else {
+            const errorHandler = (Commands[nomeComando].error ?? ((ctx, motivo) => ctx.replyText(`Erro: ${motivo}`)));
+            await errorHandler(ctx, data.error);
+        }
+    })
     .catch((erro) => {
       console.log(`Erro na execução #${id} (${nomeComando}):`, erro.message);
     })
     .finally(() => {
       execucoesAtivas.delete(id);
     });
-
   execucoesAtivas.set(id, { promise, comando: nomeComando, iniciadoEm: Date.now() });
   return id;
 }
-// baixar midia da mensagem
-async function baixar(msg,marcada=false) {
+
+async function download(msg,marcada=false) {
     let m = null;
     if(marcada){
         m = {
@@ -80,7 +90,7 @@ async function baixar(msg,marcada=false) {
             { },
             {
                 logger: pino({level:'silent'}),
-                reuploadRequest: sock.updateMediaMessage
+                reuploadRequest: Bot.sock.updateMediaMessage
             }
         )
         const extensao = extensoes[ tipos.indexOf(tipo) ]
@@ -94,169 +104,186 @@ async function baixar(msg,marcada=false) {
         return null;
     }
 }
-// obter informações da mensagem
-function fromMsg(msg){
-    const isGrupo = msg.key.remoteJid.endsWith('@g.us');
-    const isBot = msg.key.fromMe;
-    const jid = isGrupo ? msg.key.participant : msg.key.remoteJid;
-    const message = msg.message;
-    const tipo =  Object.keys(message)[0]
-    const conteudo = message[tipo];
-    const texto = message.conversation || message.extendedTextMessage?.text || conteudo?.caption || '';
-    const nome = msg.pushName ?? '~';
-    const contextInfo = conteudo?.contextInfo;
-    const isQuoted = Boolean(contextInfo?.quotedMessage);
-    const quotedTipo = isQuoted ? Object.keys(contextInfo?.quotedMessage)[0] : null;
-    const mencionados = contextInfo?.mentionedJid ?? []
-    const isView = isQuoted ? Boolean(contextInfo.quotedMessage[quotedTipo].viewOnce) : Boolean(conteudo.viewOnce)
 
-    return {
-        isGrupo,
-        isBot,
-        isQuoted,
-        isView,
-        jid,
-        tipo,
-        texto,
-        nome,
-        mencionados,
-        quoted: contextInfo?.quotedMessage,
-        quotedTipo,
-        quotedParticipant: contextInfo?.participant,
+
+let codeRequested = false;
+
+export async function startWA( tentativa = 0 ){
+    if(tentativa >= 5){
+        Bot.event.emit("error", {
+            state: "closed",
+            statusCode: null
+        })
+        return;
     }
-}
+    const { state, saveCreds } = config.login_mode === "file" ?
+        await useMultiFileAuthState( config.login_name ) :
+        await useDBAuth( config.login_name )
+    const { version } = await fetchLatestBaileysVersion();
 
-// iniciar o bot
-export async function iniciarBot(){
-    try {
-        const { state, saveCreds } = config.isDB ?
-            await usePostgresAuthState(config.session_name) :
-            await useMultiFileAuthState(config.session_name);
-        const { version } = await fetchLatestBaileysVersion();
-        saveCredsGlobal = saveCreds;
-        sock = makeWASocket({
-            auth: state,
-            browser: Browsers.ubuntu("Chrome"),
-            logger: pino({level:'silent'}),
-            version: version,
-            syncFullHistory: false
-        });
-        sock.ev.on('connection.update', async (update) => {
-            const { connection, lastDisconnect, qr } = update;
+    const sock = makeWASocket({
+        auth: state,
+        browser: Browsers.ubuntu("Chrome"),
+        logger: pino({level:"silent"}),
+        //markOnlineOnConnect: false,
+        version: version,
+        syncFullHistory: false
+    })
 
-            //console.log(update)
+    // salvando credenciais
+    sock.ev.on("creds.update", saveCreds)
 
-            if(qr){
-                // qr/code disponível
-                if(config.isQRCode){
-                    qrcode.generate(qr, {small:true}, (qrCodeString) =>  {
-                        Bot.emit('qrcode', qrCodeString)
+    // atualizações da coneção
+    sock.ev.on("connection.update", async (update) => {
+        const { connection, lastDisconnect, qr } = update;
+        if(qr && !codeRequested){
+            if(config.login_method === "code"){
+                const code = await sock.requestPairingCode( config.phone_number )
+                    .catch(erro => {
+                        Bot.event.emit("error", {
+                            from: "code",
+                            message: erro.message
+                        })
+                        return null;
+                    });
+                if(code) {
+                    Bot.event.emit("login", {
+                        from: "code",
+                        code: code
                     })
-                } else if(config.isCode){
-                    if (!sock.authState.creds.registered) {
-                        delay(2000)
-                        const code = await pairCode(sock)
-                        if(code){
-                            Bot.emit('code', code)
-                        } else {
-                            Bot.emit('fail', 'Erro ao onter CODE.')
-                        }
-                    }
+                    codeRequested = true;
                 } else {
-                    //console.log('Nenhum método de login adotado!')
-                    Bot.emit('erro', 'Nenhum método de login adotado!')
+                    codeRequested = false;
                 }
+            } else if(config.login_method === "qrcode"){
+                qrcode.generate(qr, { small: true }, (qrstr) => {
+                    codeRequested = true;
+                    Bot.event.emit("login", {
+                        from: "qrcode",
+                        code: qrstr
+                    })
+                }).catch(erro => {
+                    codeRequested = false;
+                    Bot.event.emit("error", {
+                        from: "qrcode",
+                        message: erro.message
+                    })
+                })
             }
+        }
+        if(connection === "close"){
+            const statusCode = (lastDisconnect?.error?.output?.statusCode);
+            switch( statusCode ){
+                case DisconnectReason.connectionClosed:
+                case DisconnectReason.connectionLost:
+                case DisconnectReason.timedOut:
+                case DisconnectReason.restartRequired:
+                    Bot.event.emit("connecting",{
+                        state: "reconnecting",
+                        statusCode: statusCode,
+                        reason: DisconnectReason[statusCode] ?? null
+                    })
+                    codeRequested = false;
+                    Bot.sock = null;
+                    sock.ev.removeAllListeners()
+                    sock.ws.close()
 
-            if(connection === 'close') {
-                const shouldReconnect = lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut
-                //console.log('connection closed due to ', lastDisconnect.error, ', reconnecting ', shouldReconnect)
-                if(shouldReconnect) {
-                    Bot.emit('status', 'reconectando')
-                    delay(2000)
-                    await iniciarBot();
-                } else {
-                    if(lastDisconnect.error?.output?.statusCode === 401){
-                        Bot.emit('status', 'deslogado')
-                    } else {
-                        Bot.emit('status', 'desconectado')
-                    }
-                }
-            } else if(connection === 'open') {
-                //console.log('opened connection')
-                Bot.emit('status', 'conectado')
-                tratarLembretes(sock)
+                    await delay(5000)
+                    return await startWA( tentativa + 1 )
+                break;
+                case DisconnectReason.connectionReplaced:
+                    Bot.event.emit("connecting",{
+                        state: "closed",
+                        statusCode: statusCode,
+                        reason: DisconnectReason[statusCode] ?? null
+                    })
+                break;
+                case DisconnectReason.loggedOut:
+                case DisconnectReason.badSession:
+                    Bot.event.emit("connecting",{
+                        state: "restarted",
+                        statusCode: statusCode,
+                        reason: DisconnectReason[statusCode] ?? null
+                    })
+                    await deleteSessaoAtual()
+                    codeRequested = false;
+                    Bot.sock = null;
+                    sock.ev.removeAllListeners()
+                    sock.ws.close()
+
+                    await delay(5000)
+                    return await startWA(tentativa + 1)
+                    break;
+                default:
+                    Bot.event.emit("connecting",{
+                        state: "unknown",
+                        statusCode: statusCode
+                    })
+
+                    await delay(5000)
+                    return await startWA( tentativa + 1 )
+                    break;
             }
-        })
-        sock.ev.on('creds.update', saveCreds)
-        sock.ev.on('messages.upsert', async ({ messages }) => {
-            for(const msg of messages){
-                if(!msg.message) continue;
-                // puxar informações da mensagem
-                const { isGrupo,isBot,isQuoted,isView,jid,tipo,texto,nome,mencionados,quoted,quotedTipo,quotedParticipant } = fromMsg(msg);
-                // verificar se é um comando
-                if(!texto.startsWith(config.prefixo)) continue;
-                const [rawcmd, ...args] = texto.slice(config.prefixo.length).trim().split(/\s+/);
-                const cmd = rawcmd.toLowerCase();
-                // verificar se o comando é valido
-                if(!Commands[cmd]) continue;  // implementação de um validador de usuário??
-                // se a pessoa estiver marcada como mutada
-                if(!isBot && (await isMuted(jid))){
-                    await sock.sendMessage(msg.key.remoteJid,{react: {text: '🤫', key: msg.key}})
-                    continue;
-                }
+        } else if(connection === "open"){
+            Bot.event.emit("connecting", {
+                state: "connected",
+                sock
+            })
+            Bot.sock = sock;
+        }
+    });
+
+    // mensagems
+    sock.ev.on("messages.upsert", async ({ type,messages }) => {
+        if(type === "notify"){
+            for(const m of messages){
+                if(!m.message) continue;
+                //console.log(m)
+                const {text, name, lid, msgType, quotedLid, quotedMessage, quotedType, isBot, isGroup, isQuoted, isView, mentions} = dismembrerMessage(m)
+                if(ignoreTypes.includes(msgType)) continue;
+                if(!text.startsWith(config.prefixo)) continue;
+                const [cmd, ...args] = text.slice(config.prefixo.length).trim().split(/\s+/);
+                if(!Commands[cmd]) continue;
                 const ctx = {
-                    nome, jid, tipo, args, msg, isBot, isGrupo, isQuoted, isView, quoted, quotedTipo, config, mencionados,
-                    baixar: async (aMarcada = false) => await baixar(msg,aMarcada),
-                    responderTexto: async (txt) => await sock.sendMessage(msg.key.remoteJid, { text: txt }, { quoted: msg }),
-                    editarTexto: async (txt) => await sock.sendMessage(msg.key.remoteJid, { text: txt, edit: msg.key }),
-                    responderImage: async (pth,caption='') => await sock.sendMessage(msg.key.remoteJid, {image: {url: pth}, caption}, { quoted: msg } ),
-                    responderVideo: async (pth,caption='') => await sock.sendMessage(msg.key.remoteJid, {video: {url: pth}, caption}, { quoted: msg } ),
-                    privadoImage: async (pth,caption='') => await sock.sendMessage(jid, {image: {url: pth}, caption}, { quoted: msg } ),
-                    privadoVideo: async (pth,caption='') => await sock.sendMessage(jid, {video: {url: pth}, caption}, { quoted: msg } ),
-                    responderFigura: async (pth) => await sock.sendMessage(msg.key.remoteJid, {sticker: {url: pth}}, { quoted: msg } ),
-                    responderReact: async (char) => await sock.sendMessage(msg.key.remoteJid,{react: {text: char, key: msg.key}}),
-                    obterInfoGrupo: async () => await sock.groupMetadata(msg.key.remoteJid),
-                    atualizarFotoGrupo: async (buffer) => await sock.updateProfilePicture(msg.key.remoteJid, { url: buffer }),
-                    atualizarNomeGrupo: async (nvnome) => await sock.groupUpdateSubject(msg.key.remoteJid, nvnome),
-                    atualizarDescGrupo: async (nvdesc) => await sock.groupUpdateDescription(msg.key.remoteJid, nvdesc),
-                    adiconarPessoaAoGrupo: async (njid,promov=false) => await sock.groupParticipantsUpdate(msg.key.remoteJid, [njid], !promov ? "add" : "promote"),
-                    removerPessoaAoGrupo: async (njid) => await sock.groupParticipantsUpdate(msg.key.remoteJid, [njid], "remove" ),
-                    verificarPessoa: async (njid) => await sock.onWhatsApp(njid),
-                    obterLid: async (jid) => await sock.signalRepository.lidMapping.getLIDForPN(jid),
-                };
-                executar(cmd, ctx)
+                    text, name, args, lid, msgType, quotedLid, quotedMessage, quotedType, isBot, isGroup, isQuoted, isView, mentions,
+                    replyText: async (txt) => await sock.sendMessage(m.key.remoteJid, { text: txt }, { quoted: m }),
+                    editMsg: async (txt) => await sock.sendMessage(m.key.remoteJid, { text: txt, edit: m.key }),
+                    replyFig: async (buffer) => await sock.sendMessage(m.key.remoteJid, { sticker: { url: buffer } }, { quoted: m }),
+                    replyImage: async (buffer,caption='') => await sock.sendMessage(m.key.remoteJid, {image: {url: buffer}, caption}, { quoted: m } ),
+                    replyImageToPrivate: async (buffer,caption='') => await sock.sendMessage(lid, {image: {url: buffer}, caption}, { quoted: m } ),
+                    replyVideo: async (buffer,caption='') => await sock.sendMessage(m.key.remoteJid, {video: {url: buffer}, caption}, { quoted: m } ),
+                    replyVideoToPrivate: async (buffer,caption='') => await sock.sendMessage(lid, {video: {url: buffer}, caption}, { quoted: m } ),
+                    downloadMidia: async (marcada=false) => await download(m, marcada)
+                }
+                const resultValideted = await validateCmd( ctx, Commands[cmd], cmd )
+                executar(cmd, ctx, resultValideted)
             }
-        })
-    } catch(err){
-        //console.log('Erro ao iniciar bot: '+err.message)
-        Bot.emit('erro', 'Erro ao iniciar bot: '+err.message)
-    }
+        } else {
+            // mensagens antigas entre outras
+            //console.log(messages)
+        }
+    })
 }
 
-// fechar boy
-export async function fecharBot(){
-    try {
-        if(!sock && !saveCredsGlobal){
-            console.log('Erro ao fechar bot: [sock] ou [saveCreds] inválidas')
+async function deleteSessaoAtual(){
+    if(config.login_mode === "file"){
+        try {
+            await fs.promises.rm( config.login_name, {
+                recursive: true,
+                force: true
+            })
+            return true;
+        } catch (erro){
+            Bot.event.emit("error", {
+                from: "deleteSession",
+                message: erro.message
+            })
             return false;
         }
-        await sock.ws.close()
-        await saveCredsGlobal()
-    } catch(err){
-        console.log('Erro ao fechar bot: '+err.message)
-        return false;
-    }
-}
-
-// solicitar código
-async function pairCode(sock){
-    try {
-        const number = String(config.admin_phone);
-        const code = await sock.requestPairingCode(number)
-        return code;
-    } catch (err){
-        console.log('Erro pairCode: '+err.message)
-        return null;
+    } else if(config.login_mode === "db"){
+        // chamar uma função de apagar minha sessão no mesmo arquivo que salva as chaves e a sessão
+        // a possui um try/catch interno
+        const res = await deletarSessaoDB( config.login_name )
+        return res;
     }
 }

@@ -1,28 +1,17 @@
-import express from 'express'
-import { init, running } from './run.js' 
+import { Bot } from "./bot.js";
 
-const app = express()
-
-const PORT = process.env.PORT ?? 3000
-
-app.get('/', (req,res) => {
-    if(running){
-        res.status(200).send('Suceso').end()
-    } else {
-        res.status(400).send('Nao ta rodando').end()
-    }
+Bot.event.on("connecting", ({state,statusCode,reason,sock}) => {
+    const data = {state,statusCode,reason};
+    console.log( data )
+})
+Bot.event.on("login", ({from,code}) => {
+    const data = {from,code}
+    console.log( data )
+})
+Bot.event.on("error", ({from, info}) => {
+    const data = {from, info}
+    console.log( data )
 })
 
-app.get('/start', (req,res) => {
-    if(running){
-        res.status(200).send('Suceso').end()
-    } else {
-        res.status(400).send('Nao ta rodando').end()
-        init()
-    }
-})
+await Bot.start()
 
-app.listen(PORT, async () => {
-    console.log('Running Web Bot http://0.0.0.0:'+PORT)
-    init()
-})

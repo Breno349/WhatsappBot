@@ -6,7 +6,7 @@ import ffmpegPath from 'ffmpeg-static';
 import util from 'util';
 const execFileAsync = util.promisify(execFile);
 
-export async function removerArquivo(arquivo){
+export async function deleteFile(arquivo){
     try {
         await fs.promises.unlink(arquivo);
     } catch (erro) {
@@ -14,7 +14,7 @@ export async function removerArquivo(arquivo){
     }
 }
 
-export async function convertToFiguraAnim(entrada){
+export async function video2fig(entrada){
     try {
         const nome = `midia_${Date.now()}_${Math.floor(Math.random() * 1000)}.webp`;
         const caminho = path.join(os.tmpdir(), nome);
@@ -42,7 +42,7 @@ export async function convertToFiguraAnim(entrada){
     }
 }
 
-export async function convertToFigura(entrada){
+export async function img2fig(entrada){
     try {
         const nome = `midia_${Date.now()}_${Math.floor(Math.random() * 1000)}.webp`;
         const caminho = path.join(os.tmpdir(), nome);
