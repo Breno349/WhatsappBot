@@ -46,6 +46,21 @@ export const Commands = {
             }
         }
     },
+    ping: {
+        permission: ['ban'],
+        args: [],
+        handler: async (ctx, args) => {
+            const timeMSG = (ctx.msg.messageTimestamp);
+            const timeCRR = (Date.now());
+            let delay = '-';
+            if(timeCRR && timeMSG){
+                const ms = timeCRR - (timeMSG * 1000);
+                delay = String(ms);
+            }
+            await ctx.replyText('pong 🏓 _'+delay+'ms_')
+        },
+        error: async (ctx, erro) => {}
+    },
     ver: {
         permission: ['owner'],
         args: [{name:'hint',type:'text',required:false,infinity:true}],

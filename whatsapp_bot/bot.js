@@ -245,7 +245,7 @@ export async function startWA( tentativa = 0 ){
                 const [cmd, ...args] = text.slice(config.prefixo.length).trim().split(/\s+/);
                 if(!Commands[cmd]) continue;
                 const ctx = {
-                    text, name, args, lid, msgType, quotedLid, quotedMessage, quotedType, isBot, isGroup, isQuoted, isView, mentions,
+                    text, name, args, lid, msgType, quotedLid, quotedMessage, quotedType, isBot, isGroup, isQuoted, isView, mentions, m,
                     replyText: async (txt) => await sock.sendMessage(m.key.remoteJid, { text: txt }, { quoted: m }),
                     editMsg: async (txt) => await sock.sendMessage(m.key.remoteJid, { text: txt, edit: m.key }),
                     replyFig: async (buffer) => await sock.sendMessage(m.key.remoteJid, { sticker: { url: buffer } }, { quoted: m }),
