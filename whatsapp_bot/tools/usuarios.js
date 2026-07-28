@@ -1,5 +1,3 @@
-// tipo 'ban' 'admin' 'owner' 'muted'
-
 import { pool } from "./db.js";
 import { validateCond, validateType } from "./validadores.js";
 
@@ -50,6 +48,7 @@ async function saveUserName(lid, user) {
         user.restrict ?? [] // Garante um array vazio se não existir restrição ainda
     ]);
 }
+
 async function saveUserType(lid, user) {
     await pool.query(`
       INSERT INTO "${table_name}" (lid, name, type, restrict)
@@ -78,7 +77,7 @@ export async function modifyRestriction(lid, fun, mode) {
     await saveUserRestrict(lid, user);
 }
 
-async function getLevel(ctx){
+async function getUserContext(ctx){
     if(ctx.isBot) return {
         type: 'owner'
     }
@@ -97,8 +96,8 @@ export async function listUser(){
     return users;
 }
 
-async function isPermited(ctx, per, cmd_name){
-    const user_per = await getLevel(ctx)
+async function isPermitted(ctx, per, cmd_name){
+    const user_per = await getUserContext(ctx)
     if(user_per.type !== 'owner' && user_per.register?.name !== ctx.name){
         user_per.register.name = ctx.name
         await saveUserName(ctx.lid, user_per.register)
@@ -124,7 +123,7 @@ async function isPermited(ctx, per, cmd_name){
     }
 }
 
-function isRequiredArgs(ctx, args){
+function checkRequiredArgs(ctx, args){
     let i_arg = 0;
     let argRet = {}
     for(const i in args){
@@ -160,7 +159,7 @@ function isRequiredArgs(ctx, args){
     }
 }
 
-function isConditions(ctx, cmd){
+function checkConditions(ctx, cmd){
     if(!cmd?.conditions){
         return {
             exec: true
@@ -185,8 +184,8 @@ function isConditions(ctx, cmd){
 }
 
 export async function validateCmd(ctx, cmd, cmd_name){
-    const { permited, user_permission , restrict } = await isPermited(ctx, cmd.permission, cmd_name)
-    if(!permited){
+    const { permitted, user_permission , restrict } = await isPermitted(ctx, cmd.permission, cmd_name)
+    if(!permitted){
         if(restrict){
             return {
                 exec: false,
@@ -206,11 +205,11 @@ export async function validateCmd(ctx, cmd, cmd_name){
         };
     }
 
-    const conditioned = isConditions(ctx, cmd)
+    const conditioned = checkConditions(ctx, cmd)
     if(!conditioned.exec){
         return conditioned;
     }
 
-    const required = isRequiredArgs(ctx, cmd.args)
+    const required = checkRequiredArgs(ctx, cmd.args)
     return required;
 }

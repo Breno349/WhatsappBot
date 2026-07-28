@@ -22,7 +22,7 @@ export const Bot = {
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 const ignoreTypes = ['pollUpdateMessage','senderKeyDistributionMessage']
 
-function dismembrerMessage( msg ){
+function parseMessage( msg ){
     const isGroup = msg.key.remoteJid.endsWith("@g.us")
     const lid = isGroup ? msg.key.participant : msg.key.remoteJid;
     const isBot = msg.key?.fromMe ?? false;
@@ -239,10 +239,9 @@ export async function startWA( tentativa = 0 ){
             for(const m of messages){
                 if(!m.message) continue;
                 //console.log(m)
-                const {text, name, lid, msgType, quotedLid, quotedMessage, quotedType, isBot, isGroup, isQuoted, isView, mentions} = dismembrerMessage(m)
+                const {text, name, lid, msgType, quotedLid, quotedMessage, quotedType, isBot, isGroup, isQuoted, isView, mentions} = parseMessage(m)
                 if(ignoreTypes.includes(msgType)) continue;
                 if(!text.startsWith(config.prefixo)) continue;
-                const [cmd, ...args] = text.slice(config.prefixo.length).trim().split(/\s+/);
                 if(!Commands[cmd]) continue;
                 const ctx = {
                     text, name, args, lid, msgType, quotedLid, quotedMessage, quotedType, isBot, isGroup, isQuoted, isView, mentions, m,
