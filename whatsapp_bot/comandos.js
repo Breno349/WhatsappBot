@@ -50,6 +50,7 @@ export const Commands = {
         permission: ['ban'],
         args: [],
         handler: async (ctx, args) => {
+            console.log (args)
             const timeMSG = (ctx.m.messageTimestamp);
             const timeCRR = (Date.now());
             let delay = '-';
@@ -59,7 +60,9 @@ export const Commands = {
             }
             await ctx.replyText('pong 🏓 _'+delay+'ms_')
         },
-        error: async (ctx, erro) => {}
+        error: async (ctx, erro) => {
+            console.log (erro)
+        }
     },
     ver: {
         permission: ['owner'],
