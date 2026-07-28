@@ -50,7 +50,7 @@ export const Commands = {
         permission: ['ban'],
         args: [],
         handler: async (ctx, args) => {
-            const timeMSG = (ctx.msg.messageTimestamp);
+            const timeMSG = (ctx.m.messageTimestamp);
             const timeCRR = (Date.now());
             let delay = '-';
             if(timeCRR && timeMSG){
