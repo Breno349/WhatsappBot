@@ -97,8 +97,10 @@ export async function listUser(){
 }
 
 async function isPermitted(ctx, per, cmd_name){
+    if (user_per.type === 'owner') {
+        return { permited: true, user_permission: user_per.type };
     const user_per = await getUserContext(ctx)
-    if(user_per.type !== 'owner' && user_per.register?.name !== ctx.name){
+    if(user_per.register?.name !== ctx.name){
         user_per.register.name = ctx.name
         await saveUserName(ctx.lid, user_per.register)
     }
@@ -111,8 +113,6 @@ async function isPermitted(ctx, per, cmd_name){
             restrict: true
         }
     }
-    if (user_per.type === 'owner') {
-        return { permited: true, user_permission: user_per.type };
     }
     const i_cmd = per.map(item => hieraquia.indexOf(item))
     const i_user = hieraquia.indexOf(user_per.type)
