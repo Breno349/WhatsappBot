@@ -113,7 +113,6 @@ async function isPermitted(ctx, per, cmd_name){
             restrict: true
         }
     }
-    }
     const i_cmd = per.map(item => hieraquia.indexOf(item))
     const i_user = hieraquia.indexOf(user_per.type)
     const limiteMaisPermissivo = Math.max(...i_cmd) // o nível MENOS exigente entre os listados
