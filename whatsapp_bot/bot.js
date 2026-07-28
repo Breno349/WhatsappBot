@@ -240,6 +240,7 @@ export async function startWA( tentativa = 0 ){
                 if(!m.message) continue;
                 //console.log(m)
                 const {text, name, lid, msgType, quotedLid, quotedMessage, quotedType, isBot, isGroup, isQuoted, isView, mentions} = parseMessage(m)
+                console.log(text)
                 if(ignoreTypes.includes(msgType)) continue;
                 if(!text.startsWith(config.prefixo)) continue;
                 const [cmd, ...args] = text.slice(config.prefixo.length).trim().split(/\s+/);
