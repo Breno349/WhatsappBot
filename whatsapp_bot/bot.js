@@ -139,7 +139,12 @@ export async function startWA( tentativa = 0 ){
             from: "closed",
             message: "Muitas tentativas seguidas"
         })
-        return;
+        if(Bot.sock){
+            Bot.sock.ev.removeAllListeners()
+            sock.ws.close()
+        }
+        Bot.sock = null;
+        throw new Error('Muitas tentativas')
     }
     const { state, saveCreds } = config.login_mode === "file" ?
         await useMultiFileAuthState( config.login_name ) :
@@ -148,9 +153,9 @@ export async function startWA( tentativa = 0 ){
 
     const sock = makeWASocket({
         auth: state,
-        browser: Browsers.ubuntu("Chrome"),
+        browser: Browsers.windows("Chrome"),
         logger: pino({level:"silent"}),
-        //markOnlineOnConnect: false,
+        markOnlineOnConnect: false,
         version: version,
         syncFullHistory: false
     })
@@ -289,20 +294,20 @@ export async function startWA( tentativa = 0 ){
                     replyVideo: async (buffer,caption='') => await sock.sendMessage(m.key.remoteJid, {video: {url: buffer}, caption}, { quoted: m } ),
                     replyVideoToPrivate: async (buffer,caption='') => await sock.sendMessage(lid, {video: {url: buffer}, caption}, { quoted: m } ),
                     waitForResponse: (opcoes) => waitForResponse(m.key.remoteJid, lid, opcoes),
-                    replyReact: (emoji) => sock.sendMessage(jid, { react: { text: emoji, key: m.key } }), // emoji vazio '' remove a reação
-                    replyAudio: (buffer, ptt=false) => sock.sendMessage(jid, { audio: { url: buffer }, mimetype: 'audio/mp4', ptt }, { quoted: m }),
-                    replyDocument: (buffer, nomeArquivo, mimetype) => sock.sendMessage(jid, { document: { url: buffer }, fileName: nomeArquivo, mimetype }, { quoted: m }),
-                    replyGif: (buffer, caption='') => sock.sendMessage(jid, { video: { url: buffer }, caption, gifPlayback: true }, { quoted: m }),
-                    replyLocation: (lat, lon, nome='') => sock.sendMessage(jid, { location: { degreesLatitude: lat, degreesLongitude: lon, name: nome } }, { quoted: m }),
+                    replyReact: (emoji) => sock.sendMessage(m.key.remoteJid, { react: { text: emoji, key: m.key } }), // emoji vazio '' remove a reação
+                    replyAudio: (buffer, ptt=false) => sock.sendMessage(m.key.remoteJid, { audio: { url: buffer }, mimetype: 'audio/mp4', ptt }, { quoted: m }),
+                    replyDocument: (buffer, nomeArquivo, mimetype) => sock.sendMessage(m.key.remoteJid, { document: { url: buffer }, fileName: nomeArquivo, mimetype }, { quoted: m }),
+                    replyGif: (buffer, caption='') => sock.sendMessage(m.key.remoteJid, { video: { url: buffer }, caption, gifPlayback: true }, { quoted: m }),
+                    replyLocation: (lat, lon, nome='') => sock.sendMessage(m.key.remoteJid, { location: { degreesLatitude: lat, degreesLongitude: lon, name: nome } }, { quoted: m }),
                     replyContact: (nome, numero) => {
                         const vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${nome}\nTEL;type=CELL;type=VOICE;waid=${numero}:+${numero}\nEND:VCARD`;
-                        return sock.sendMessage(jid, { contacts: { displayName: nome, contacts: [{ vcard }] } }, { quoted: m });
+                        return sock.sendMessage(m.key.remoteJid, { contacts: { displayName: nome, contacts: [{ vcard }] } }, { quoted: m });
                     },
-                    replyPoll: (pergunta, opcoes, multiplaEscolha=false) => sock.sendMessage(jid, {
+                    replyPoll: (pergunta, opcoes, multiplaEscolha=false) => sock.sendMessage(m.key.remoteJid, {
                         poll: { name: pergunta, values: opcoes, selectableCount: multiplaEscolha ? opcoes.length : 1 }
                     }, { quoted: m }),
-                    deleteMsg: () => sock.sendMessage(jid, { delete: m.key }), // apaga a própria mensagem enviada pelo bot
-                    pinMsg: (segundos=86400) => sock.sendMessage(jid, { pin: { type: 1, time: segundos, key: m.key } }),
+                    deleteMsg: () => sock.sendMessage(m.key.remoteJid, { delete: m.key }), // apaga a própria mensagem enviada pelo bot
+                    pinMsg: (segundos=86400) => sock.sendMessage(m.key.remoteJid, { pin: { type: 1, time: segundos, key: m.key } }),
                     downloadMidia: async (marcada=false) => await download(m, marcada)
                 }
                 const resultValideted = await validateCmd( ctx, Commands[cmd], cmd )
