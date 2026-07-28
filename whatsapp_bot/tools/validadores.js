@@ -47,9 +47,9 @@ export const validateCond = {
         test: (ctx) => ctx.msgType === 'videoMessage'
     },
     quoted_is_image: {
-        test: (ctx) => this.is_quoted(ctx) && ctx.quotedType === 'imageMessage'
+        test: (ctx) => validateCond.is_quoted.test(ctx) && ctx.quotedType === 'imageMessage'
     },
     quoted_is_video: {
-        test: (ctx) => this.is_quoted(ctx) && ctx.quotedType === 'videoMessage'  // faltou o "M"
+        test: (ctx) => validateCond.is_quoted.test(ctx) && ctx.quotedType === 'videoMessage'
     },
 }

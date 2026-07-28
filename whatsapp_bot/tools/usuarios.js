@@ -72,6 +72,7 @@ export async function updateUserRestrict(lid, name, cmd, mode=null){
         restrict = restrict.filter( item => (item !== cmd) ).map(item => item)
     }
 
+    user.restrict = restrict;
     await updateUserContext(user,'restrict')
 }
 

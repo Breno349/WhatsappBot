@@ -1,4 +1,4 @@
-import { deleteFile, img2fig } from "./tools/sticker.js"
+import { deleteFile, img2fig, video2fig } from "./tools/sticker.js"
 import { listAllUsers, updateUserRestrict } from "./tools/usuarios.js"
 
 export const Commands = {
