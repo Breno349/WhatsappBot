@@ -1,18 +1,13 @@
 import { deleteFile, img2fig } from "./tools/sticker.js"
-import { listUser, modifyRestriction } from "./tools/usuarios.js"
+import { listAllUsers, updateUserRestrict } from "./tools/usuarios.js"
 
 export const Commands = {
     menu: {
-        permission: ['user'],
-        args: [],
         handler: async (ctx, args) => {
             await ctx.replyText( "Menu meu browther" )
-        },
-        error: (ctx, erro) => {}
+        }
     },
     fig: {
-        permission: ['user'],
-        args: [],
         conditions: [ 'is_view_only_owner' ],
         handler: async (ctx, args) => {
             const tipo = ctx.quotedType ?? ctx.msgType
@@ -47,8 +42,6 @@ export const Commands = {
         }
     },
     ping: {
-        permission: ['user'],
-        args: [],
         handler: async (ctx, args) => {
             console.log (args)
             const timeMSG = (ctx.m.messageTimestamp);
@@ -59,13 +52,10 @@ export const Commands = {
                 delay = String(ms);
             }
             await ctx.replyText('pong 🏓 _'+delay+'ms_')
-        },
-        error: async (ctx, erro) => {
-            console.log (erro)
         }
     },
     ver: {
-        permission: ['owner'],
+        permission: 'owner',
         args: [{name:'hint',type:'text',required:false,infinity:true}],
         conditions: ['is_quoted','is_quoted_view'],
         handler: async (ctx, args) => {
@@ -102,33 +92,33 @@ export const Commands = {
         }
     },
     block: {
-        permission: ['owner'],
+        permission: 'owner',
         args: [
             {name:'comando',type:'cmd',required:true}
         ],
         conditions: ['is_mentioned'],
         handler: async (ctx, args) => {
             for(const lid of ctx.mentions){
-                await modifyRestriction( lid, args.comando, 'add' )
+                await updateUserRestrict(lid, null, args.comando, 'add')
             }
         },
         error: async (ctx, erro) => {
             if(erro.reason === 'arg'){
-                await ctx.replyText('Falta definir o comando')
+                await ctx.replyText('Falta definir um comando')
             } else if(erro.reason === 'condition'){
-                await ctx.replyText('Falta definir marcar uma pessoa')
+                await ctx.replyText('Falta marcar uma pessoa')
             }
         }
     },
     unblock: {
-        permission: ['owner'],
+        permission: 'owner',
         args: [
             {name:'comando',type:'cmd',required:true}
         ],
         conditions: ['is_mentioned'],
         handler: async (ctx, args) => {
             for(const lid of ctx.mentions){
-                await modifyRestriction( lid, args.comando, 'rem' )
+                await updateUserRestrict(lid, null, args.comando, 'rem')
             }
         },
         error: async (ctx, erro) => {
@@ -140,16 +130,25 @@ export const Commands = {
         }
     },
     blocklist: {
-        permission: ['owner'],
-        args: [],
+        permission: 'owner',
         handler: async (ctx, args) => {
-            const users = await listUser()
+            const users = await listAllUsers()
             const users_formated = users.map(item => {
                 return `Nome: *${item.name}*\n> Restrições: ${item.restrict?.length>0? item.restrict.join(', ') : 'Nenhuma'}\n`
             })
             const txt = `Usuarios: \n\n${users_formated?.length>0 ? users_formated.join('\n') : 'nenhum'}`
             await ctx.replyText(txt)
-        },
-        error: async (ctx, erro) => {}
+        }
+    },
+    piada: {
+        handler: async (ctx, args) => {
+            const resp = await fetch('https://v2.jokeapi.dev/joke/Any?lang=pt');
+            const data = await resp.json();
+            await ctx.replyText(`${data.joke ?? data.setup}\n> ${data.delivery}`)
+        }
     }
+    // ban user
+    // unban user
+    // promote user
+    // umpromoter user
 }

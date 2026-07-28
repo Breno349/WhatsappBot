@@ -52,7 +52,7 @@ function executar(nomeComando, ctx, data) {
         if(data.exec){
             await Commands[nomeComando].handler(ctx, data.args);
         } else {
-            const errorHandler = (Commands[nomeComando].error ?? ((ctx, motivo) => ctx.replyText(`Erro: ${motivo}`)));
+            const errorHandler = (Commands[nomeComando].error ?? ((ctx, motivo) => {}));
             await errorHandler(ctx, data.error);
         }
     })
