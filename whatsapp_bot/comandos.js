@@ -47,7 +47,7 @@ export const Commands = {
         }
     },
     ping: {
-        permission: ['ban'],
+        permission: ['user'],
         args: [],
         handler: async (ctx, args) => {
             console.log (args)
