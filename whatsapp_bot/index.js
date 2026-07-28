@@ -8,8 +8,8 @@ Bot.event.on("login", ({from,code}) => {
     const data = {from,code}
     console.log( data )
 })
-Bot.event.on("error", ({from, info}) => {
-    const data = {from, info}
+Bot.event.on("error", ({from, message}) => {
+    const data = {from, message}
     console.log( data )
 })
 

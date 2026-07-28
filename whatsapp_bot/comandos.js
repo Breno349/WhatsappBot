@@ -29,7 +29,7 @@ export const Commands = {
             } else if(tipo === 'videoMessage'){
                 const video = await ctx.downloadMidia( ctx.isQuoted )
                 if(video){
-                    const fig = await img2fig( video )
+                    const fig = await video2fig( video )
                     if(fig){
                         await ctx.replyFig( fig )
                         await deleteFile( fig )
@@ -118,7 +118,7 @@ export const Commands = {
         }
     },
     unblock: {
-        ermission: ['owner'],
+        permission: ['owner'],
         args: [
             {name:'comando',type:'cmd',required:true}
         ],
