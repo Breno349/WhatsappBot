@@ -216,7 +216,7 @@ export async function validateCmd(ctx, cmd, cmd_name){
 
     const required = isRequiredArgs(ctx, cmd.args)
     return required;
-}}
+}
 async function saveUserName(lid, user) {
     await pool.query(`
       INSERT INTO "${table_name}" (lid, name, type, restrict)
