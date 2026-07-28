@@ -1,17 +1,17 @@
+// index.js
 import { Bot } from "./bot.js";
+import { registrarListenersPadrao } from "./tools/listeners.js";
+import http from "http";
 
-Bot.event.on("connecting", ({state,statusCode,reason,sock}) => {
-    const data = {state,statusCode,reason};
-    console.log( data )
-})
-Bot.event.on("login", ({from,code}) => {
-    const data = {from,code}
-    console.log( data )
-})
-Bot.event.on("error", ({from, message}) => {
-    const data = {from, message}
-    console.log( data )
-})
+registrarListenersPadrao();
+
+const PORT = process.env.PORT ?? 3000;
+
+http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ state: Bot.sock !== null }));
+}).listen(PORT, () => {
+    console.log(`\x1b[34mHTTP:\x1b[0m Executing in ${PORT}`);
+});
 
 await Bot.start()
-

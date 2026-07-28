@@ -19,8 +19,6 @@ export const Bot = {
     }
 }
 
-
-// bot.js
 const aguardandoResposta = new Map(); // chave: `${remoteJid}:${lid}` -> { resolve, timeoutId }
 function chaveEspera(remoteJid, lid) {
     return `${remoteJid}:${lid}`;
@@ -41,9 +39,6 @@ function waitForResponse(remoteJid, lid, { timeout = 60000 } = {}) {
         aguardandoResposta.set(chave, { resolve, timeoutId });
     });
 }
-
-
-
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 const ignoreTypes = ['pollUpdateMessage','senderKeyDistributionMessage']
@@ -153,9 +148,9 @@ export async function startWA( tentativa = 0 ){
 
     const sock = makeWASocket({
         auth: state,
-        browser: Browsers.windows("Chrome"),
+        browser: Browsers.macOS("Chrome"),
         logger: pino({level:"silent"}),
-        markOnlineOnConnect: false,
+        //markOnlineOnConnect: false,
         version: version,
         syncFullHistory: false
     })
