@@ -242,6 +242,7 @@ export async function startWA( tentativa = 0 ){
                 const {text, name, lid, msgType, quotedLid, quotedMessage, quotedType, isBot, isGroup, isQuoted, isView, mentions} = parseMessage(m)
                 if(ignoreTypes.includes(msgType)) continue;
                 if(!text.startsWith(config.prefixo)) continue;
+                const [cmd, ...args] = text.slice(config.prefixo.length).trim().split(/\s+/);
                 if(!Commands[cmd]) continue;
                 const ctx = {
                     text, name, args, lid, msgType, quotedLid, quotedMessage, quotedType, isBot, isGroup, isQuoted, isView, mentions, m,
