@@ -146,6 +146,22 @@ export const Commands = {
             const data = await resp.json();
             await ctx.replyText(`${data.joke ?? data.setup}\n> ${data.delivery}`)
         }
+    },
+    enquete: {
+        args:[
+            {name:'pergunta',type:'text',required:true,infinity:true}
+        ],
+        handler: async (ctx, args) => {
+            await ctx.replyText('Digite as opções abaixo, quando terminar digite "."')
+            const question = await ctx.waitForResponse({timeout:10000})
+            let questions = []
+            while(question !== '.'){
+                questions.push( question )
+            }
+            if(questions.length>0){
+                await ctx.replyPoll(args.pergunta, questions)
+            }
+        }
     }
     // ban user
     // unban user

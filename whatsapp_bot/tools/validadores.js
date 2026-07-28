@@ -2,23 +2,37 @@ import { Commands } from "../comandos.js";
 
 export const validateType = {
     number: {
-        test: (valor) => /^-?\d+(\.\d+)?$/.test(valor),
+        test: (valor) => valor != null && Number.isFinite(Number(valor)) && /^-?\d+(\.\d+)?$/.test(valor.trim()),
     },
     phone_number: {
         test: (valor) => /^\d{11,13}$/.test(valor),
     },
     duration: {
-        test: (valor) => /^(\d+[dhms])+$/.test(valor),
+        test: (valor) => valor != null && /^(\d+[dhms])+$/.test(valor),
     },
     url: {
-        test: (valor) => { try { new URL(valor); return true; } catch { return false; } },
+        test: (valor) => {
+            if (!valor) return false;
+            try {
+                const u = new URL(valor);
+                return u.protocol === 'http:' || u.protocol === 'https:'; // bloqueia javascript:, file:, etc
+            } catch { return false; }
+        },
     },
     text: {
         test: (valor) => typeof valor === 'string' && valor.trim().length > 0,
     },
     cmd: {
-        test: (valor) => Boolean( Commands[valor] )
-    }
+        test: (valor) => valor != null && Boolean(Commands[valor.toLowerCase()]), // aceita .Ping ou .ping
+    },
+    // novos, que valem a pena ter:
+    boolean: {
+        test: (valor) => ['sim', 'nao', 'não', 's', 'n', 'yes', 'no'].includes(valor?.toLowerCase()),
+        parse: (valor) => ['sim', 's', 'yes'].includes(valor.toLowerCase()),
+    },
+    mention: {
+        test: (valor, ctx) => (ctx?.mentions?.length ?? 0) > 0,
+    },
 };
 
 export const validateCond = {

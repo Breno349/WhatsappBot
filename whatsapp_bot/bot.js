@@ -19,6 +19,32 @@ export const Bot = {
     }
 }
 
+
+// bot.js
+const aguardandoResposta = new Map(); // chave: `${remoteJid}:${lid}` -> { resolve, timeoutId }
+function chaveEspera(remoteJid, lid) {
+    return `${remoteJid}:${lid}`;
+}
+function waitForResponse(remoteJid, lid, { timeout = 60000 } = {}) {
+    const chave = chaveEspera(remoteJid, lid);
+    // se já existia uma espera pendente pra essa mesma pessoa/chat, cancela a antiga
+    if (aguardandoResposta.has(chave)) {
+        const anterior = aguardandoResposta.get(chave);
+        clearTimeout(anterior.timeoutId);
+        anterior.resolve(null); // resolve como "cancelada", não deixa a Promise antiga pendurada pra sempre
+    }
+    return new Promise((resolve) => {
+        const timeoutId = setTimeout(() => {
+            aguardandoResposta.delete(chave);
+            resolve(null); // timeout — ninguém respondeu a tempo
+        }, timeout);
+        aguardandoResposta.set(chave, { resolve, timeoutId });
+    });
+}
+
+
+
+
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 const ignoreTypes = ['pollUpdateMessage','senderKeyDistributionMessage']
 
@@ -105,14 +131,13 @@ async function download(msg,marcada=false) {
     }
 }
 
-
 let codeRequested = false;
 
 export async function startWA( tentativa = 0 ){
     if(tentativa >= 5){
         Bot.event.emit("error", {
-            state: "closed",
-            statusCode: null
+            from: "closed",
+            message: "Muitas tentativas seguidas"
         })
         return;
     }
@@ -241,6 +266,16 @@ export async function startWA( tentativa = 0 ){
                 //console.log(m)
                 const {text, name, lid, msgType, quotedLid, quotedMessage, quotedType, isBot, isGroup, isQuoted, isView, mentions} = parseMessage(m)
                 if(ignoreTypes.includes(msgType)) continue;
+
+                const chave = chaveEspera(m.key.remoteJid, lid);
+                // se tem alguém esperando resposta dessa pessoa nessa conversa, entrega pra ela
+                if (aguardandoResposta.has(chave)) {
+                    const { resolve, timeoutId } = aguardandoResposta.get(chave);
+                    clearTimeout(timeoutId);
+                    aguardandoResposta.delete(chave);
+                    resolve({ ...({text, name, lid, msgType, quotedLid, quotedMessage, quotedType, isBot, isGroup, isQuoted, isView, mentions}), m });
+                }
+
                 if(!text.startsWith(config.prefixo)) continue;
                 const [cmd, ...args] = text.slice(config.prefixo.length).trim().split(/\s+/);
                 if(!Commands[cmd]) continue;
@@ -253,6 +288,21 @@ export async function startWA( tentativa = 0 ){
                     replyImageToPrivate: async (buffer,caption='') => await sock.sendMessage(lid, {image: {url: buffer}, caption}, { quoted: m } ),
                     replyVideo: async (buffer,caption='') => await sock.sendMessage(m.key.remoteJid, {video: {url: buffer}, caption}, { quoted: m } ),
                     replyVideoToPrivate: async (buffer,caption='') => await sock.sendMessage(lid, {video: {url: buffer}, caption}, { quoted: m } ),
+                    waitForResponse: (opcoes) => waitForResponse(m.key.remoteJid, lid, opcoes),
+                    replyReact: (emoji) => sock.sendMessage(jid, { react: { text: emoji, key: m.key } }), // emoji vazio '' remove a reação
+                    replyAudio: (buffer, ptt=false) => sock.sendMessage(jid, { audio: { url: buffer }, mimetype: 'audio/mp4', ptt }, { quoted: m }),
+                    replyDocument: (buffer, nomeArquivo, mimetype) => sock.sendMessage(jid, { document: { url: buffer }, fileName: nomeArquivo, mimetype }, { quoted: m }),
+                    replyGif: (buffer, caption='') => sock.sendMessage(jid, { video: { url: buffer }, caption, gifPlayback: true }, { quoted: m }),
+                    replyLocation: (lat, lon, nome='') => sock.sendMessage(jid, { location: { degreesLatitude: lat, degreesLongitude: lon, name: nome } }, { quoted: m }),
+                    replyContact: (nome, numero) => {
+                        const vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${nome}\nTEL;type=CELL;type=VOICE;waid=${numero}:+${numero}\nEND:VCARD`;
+                        return sock.sendMessage(jid, { contacts: { displayName: nome, contacts: [{ vcard }] } }, { quoted: m });
+                    },
+                    replyPoll: (pergunta, opcoes, multiplaEscolha=false) => sock.sendMessage(jid, {
+                        poll: { name: pergunta, values: opcoes, selectableCount: multiplaEscolha ? opcoes.length : 1 }
+                    }, { quoted: m }),
+                    deleteMsg: () => sock.sendMessage(jid, { delete: m.key }), // apaga a própria mensagem enviada pelo bot
+                    pinMsg: (segundos=86400) => sock.sendMessage(jid, { pin: { type: 1, time: segundos, key: m.key } }),
                     downloadMidia: async (marcada=false) => await download(m, marcada)
                 }
                 const resultValideted = await validateCmd( ctx, Commands[cmd], cmd )
