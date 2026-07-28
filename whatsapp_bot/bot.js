@@ -144,7 +144,7 @@ export async function startWA( tentativa = 0 ){
             sock.ws.close()
         }
         Bot.sock = null;
-        throw new Error('Muitas tentativas')
+        return null;
     }
     const { state, saveCreds } = config.login_mode === "file" ?
         await useMultiFileAuthState( config.login_name ) :
