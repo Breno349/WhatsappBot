@@ -98,7 +98,7 @@ export async function listUser(){
 
 async function isPermitted(ctx, per, cmd_name){
     const user_per = await getUserContext(ctx)
-    if(user_typr.type !== 'owner' && user_per.register?.name !== ctx.name){
+    if(user_per.type !== 'owner' && user_per.register?.name !== ctx.name){
         user_per.register.name = ctx.name
         await saveUserName(ctx.lid, user_per.register)
     }
