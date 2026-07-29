@@ -1,0 +1,30 @@
+<<<=== *`BRENIN BOT`* ===>>>
+
+_*Comandos:*_
+_------------------ *Comuns* ------------------_
+`.menu`
+> Apresenta esse menu aqui
+`.ping`
+> Fazer teste de ping com o servidor
+`.piada`
+> Gera uma piada ruim (geralmente a mesma)
+
+_------------------ *Figurinha* ------------------_
+`.fig`
+> Faz uma figurinha a partir de foto e vídeo
+
+_------------------ *Audio* ------------------_
+`.audio` _!<number>_ _<speak>_
+> Gera um áudio a partir do texto
+
+_------------------ *Imagem* ------------------_
+`.ver` _!<text>_
+> Visualiza foto/video de *visu* unica
+
+_------------------ *Avançados* ------------------_
+`.block` _<cmd>_ _<user>_
+> Impede alguém de executar um comando
+`.unblock` _<cmd>_ _<user>_
+> (Des)Impede alguém de executar um comando
+`.blocklist`
+> Exibe a lista de pessoas bloqueadas

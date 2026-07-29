@@ -25,7 +25,6 @@ export const validateType = {
     cmd: {
         test: (valor) => valor != null && Boolean(Commands[valor.toLowerCase()]), // aceita .Ping ou .ping
     },
-    // novos, que valem a pena ter:
     boolean: {
         test: (valor) => ['sim', 'nao', 'não', 's', 'n', 'yes', 'no'].includes(valor?.toLowerCase()),
         parse: (valor) => ['sim', 's', 'yes'].includes(valor.toLowerCase()),

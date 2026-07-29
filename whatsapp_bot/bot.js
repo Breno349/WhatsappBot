@@ -43,7 +43,7 @@ function waitForResponse(remoteJid, lid, { timeout = 60000 } = {}) {
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 const ignoreTypes = ['pollUpdateMessage','senderKeyDistributionMessage']
 
-function parseMessage( msg ){
+export function parseMessage( msg ){
     const isGroup = msg.key.remoteJid.endsWith("@g.us")
     const lid = isGroup ? msg.key.participant : msg.key.remoteJid;
     const isBot = msg.key?.fromMe ?? false;
@@ -150,7 +150,7 @@ export async function startWA( tentativa = 0 ){
         auth: state,
         browser: Browsers.macOS("Chrome"),
         logger: pino({level:"silent"}),
-        //markOnlineOnConnect: false,
+        markOnlineOnConnect: false,
         version: version,
         syncFullHistory: false
     })
@@ -288,21 +288,23 @@ export async function startWA( tentativa = 0 ){
                     replyImageToPrivate: async (buffer,caption='') => await sock.sendMessage(lid, {image: {url: buffer}, caption}, { quoted: m } ),
                     replyVideo: async (buffer,caption='') => await sock.sendMessage(m.key.remoteJid, {video: {url: buffer}, caption}, { quoted: m } ),
                     replyVideoToPrivate: async (buffer,caption='') => await sock.sendMessage(lid, {video: {url: buffer}, caption}, { quoted: m } ),
-                    waitForResponse: (opcoes) => waitForResponse(m.key.remoteJid, lid, opcoes),
-                    replyReact: (emoji) => sock.sendMessage(m.key.remoteJid, { react: { text: emoji, key: m.key } }), // emoji vazio '' remove a reação
-                    replyAudio: (buffer, ptt=false) => sock.sendMessage(m.key.remoteJid, { audio: { url: buffer }, mimetype: 'audio/mp4', ptt }, { quoted: m }),
-                    replyDocument: (buffer, nomeArquivo, mimetype) => sock.sendMessage(m.key.remoteJid, { document: { url: buffer }, fileName: nomeArquivo, mimetype }, { quoted: m }),
-                    replyGif: (buffer, caption='') => sock.sendMessage(m.key.remoteJid, { video: { url: buffer }, caption, gifPlayback: true }, { quoted: m }),
-                    replyLocation: (lat, lon, nome='') => sock.sendMessage(m.key.remoteJid, { location: { degreesLatitude: lat, degreesLongitude: lon, name: nome } }, { quoted: m }),
-                    replyContact: (nome, numero) => {
+                    waitForResponse: async (opcoes) => await waitForResponse(m.key.remoteJid, lid, opcoes),
+                    replyReact: async (emoji) => await sock.sendMessage(m.key.remoteJid, { react: { text: emoji, key: m.key } }), // emoji vazio '' remove a reação
+                    replyAudio: async (buffer, ptt=false) => await sock.sendMessage(m.key.remoteJid, { audio: { url: buffer }, mimetype: 'audio/mp4', ptt }, { quoted: m }),
+                    replyAudioTo: async (lid_other, buffer, ptt=false, view=false) => await sock.sendMessage(lid_other, { audio: { url: buffer }, viewOnce: view, mimetype: 'audio/mp4', ptt }),
+                    replyDocument: async (buffer, nomeArquivo, mimetype) => await sock.sendMessage(m.key.remoteJid, { document: { url: buffer }, fileName: nomeArquivo, mimetype }, { quoted: m }),
+                    replyGif: async (buffer, caption='') => await sock.sendMessage(m.key.remoteJid, { video: { url: buffer }, caption, gifPlayback: true }, { quoted: m }),
+                    replyLocation: async (lat, lon, nome='') => await sock.sendMessage(m.key.remoteJid, { location: { degreesLatitude: lat, degreesLongitude: lon, name: nome } }, { quoted: m }),
+                    replyContact: async (nome, numero) => {
                         const vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${nome}\nTEL;type=CELL;type=VOICE;waid=${numero}:+${numero}\nEND:VCARD`;
-                        return sock.sendMessage(m.key.remoteJid, { contacts: { displayName: nome, contacts: [{ vcard }] } }, { quoted: m });
+                        return await sock.sendMessage(m.key.remoteJid, { contacts: { displayName: nome, contacts: [{ vcard }] } }, { quoted: m });
                     },
-                    replyPoll: (pergunta, opcoes, multiplaEscolha=false) => sock.sendMessage(m.key.remoteJid, {
+                    replyPoll: async (pergunta, opcoes, multiplaEscolha=false) => await sock.sendMessage(m.key.remoteJid, {
                         poll: { name: pergunta, values: opcoes, selectableCount: multiplaEscolha ? opcoes.length : 1 }
                     }, { quoted: m }),
-                    deleteMsg: () => sock.sendMessage(m.key.remoteJid, { delete: m.key }), // apaga a própria mensagem enviada pelo bot
-                    pinMsg: (segundos=86400) => sock.sendMessage(m.key.remoteJid, { pin: { type: 1, time: segundos, key: m.key } }),
+                    deleteMsg: async (quoted=false) => await sock.sendMessage(m.key.remoteJid, { delete: m.key }), // apaga a própria mensagem enviada pelo bot
+                    pinMsg: async (segundos=86400) => await sock.sendMessage(m.key.remoteJid, { pin: { type: 1, time: segundos, key: m.key } }),
+                    getLid: async (jid) => await sock.onWhatsApp(jid),
                     downloadMidia: async (marcada=false) => await download(m, marcada)
                 }
                 const resultValideted = await validateCmd( ctx, Commands[cmd], cmd )

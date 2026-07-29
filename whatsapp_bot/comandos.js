@@ -1,10 +1,17 @@
+import { parseMessage } from "./bot.js"
+import { generateAudio } from "./tools/audio.js"
+import fs from 'fs';
 import { deleteFile, img2fig, video2fig } from "./tools/sticker.js"
 import { listAllUsers, updateUserRestrict } from "./tools/usuarios.js"
 
 export const Commands = {
     menu: {
         handler: async (ctx, args) => {
-            await ctx.replyText( "Menu meu browther" )
+            const file = './menu'
+            const data = await fs.promises.readFile( file, 'utf-8' )
+            if(data){
+                await ctx.replyText( data )
+            }
         }
     },
     fig: {
@@ -147,19 +154,23 @@ export const Commands = {
             await ctx.replyText(`${data.joke ?? data.setup}\n> ${data.delivery}`)
         }
     },
-    enquete: {
-        args:[
-            {name:'pergunta',type:'text',required:true,infinity:true}
+    audio: {
+        args: [
+            {name:'phone',type:'phone_number',required:false},
+            {name:'fala',type:'text',required:true,infinity:true}
         ],
         handler: async (ctx, args) => {
-            await ctx.replyText('Digite as opções abaixo, quando terminar digite "."')
-            const question = await ctx.waitForResponse({timeout:10000})
-            let questions = []
-            while(question !== '.'){
-                questions.push( question )
-            }
-            if(questions.length>0){
-                await ctx.replyPoll(args.pergunta, questions)
+            const audio = await generateAudio( args.fala )
+            if(audio){
+                if(args.phone){
+                    const [user] = await ctx.getLid( `55${args.phone}@s.whatsapp.net` )
+                    if(user.exists == true && user.lid !== null){
+                        await ctx.replyAudioTo( user.lid, audio, true )
+                    }
+                } else {
+                    await ctx.replyAudio( audio, true )
+                }
+                await deleteFile(audio)
             }
         }
     }
