@@ -80,9 +80,9 @@ export const Commands = {
                 const midia = await ctx.downloadMidia(ctx.isQuoted)
                 if(midia){
                     if(!args.vo && args.hint){
-                        await ctx.replyImageToPrivate( midia, caption )
+                        await ctx.replyImageToPrivate( midia, caption)
                     } else {
-                        await ctx.replyImage( midia, caption )
+                        await ctx.replyImage( midia, caption, view=Boolean(args.vo) )
                     }
                     await deleteFile(midia)
                 }
@@ -92,7 +92,7 @@ export const Commands = {
                     if(!args.vo && args.hint){
                         await ctx.replyVideoToPrivate( midia, caption )
                     } else {
-                        await ctx.replyVideo( midia, caption )
+                        await ctx.replyVideo( midia, caption, view=Boolean(args.vo))
                     }
                     await deleteFile(midia)
                 }
