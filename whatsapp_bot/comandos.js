@@ -73,20 +73,22 @@ export const Commands = {
             if(tipo === 'imageMessage'){
                 const midia = await ctx.downloadMidia(ctx.isQuoted)
                 if(midia){
+                    const caption = ctx.quotedMessage?.caption ?? ''
                     if(args.hint){
-                        await ctx.replyImageToPrivate( midia )
+                        await ctx.replyImageToPrivate( midia, caption )
                     } else {
-                        await ctx.replyImage( midia )
+                        await ctx.replyImage( midia, caption )
                     }
                     await deleteFile(midia)
                 }
             } else if(tipo === 'videoMessage'){
                 const midia = await ctx.downloadMidia(ctx.isQuoted)
                 if(midia){
+                    const caption = ctx.quotedMessage?.caption ?? ''
                     if(args.hint){
-                        await ctx.replyVideoToPrivate( midia )
+                        await ctx.replyVideoToPrivate( midia, caption )
                     } else {
-                        await ctx.replyVideo( midia )
+                        await ctx.replyVideo( midia, caption )
                     }
                     await deleteFile(midia)
                 }
