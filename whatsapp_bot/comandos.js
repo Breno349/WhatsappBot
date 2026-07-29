@@ -70,6 +70,7 @@ export const Commands = {
         conditions: ['is_quoted','is_quoted_view'],
         handler: async (ctx, args) => {
             console.log(args)
+            console.log(ctx.quotedMessage)
             if(args.hint){
                 await ctx.editMsg(args.hint)
             }
