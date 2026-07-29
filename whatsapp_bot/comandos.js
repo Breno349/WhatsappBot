@@ -50,7 +50,6 @@ export const Commands = {
     },
     ping: {
         handler: async (ctx, args) => {
-            console.log (args)
             const timeMSG = (ctx.m.messageTimestamp);
             const timeCRR = (Date.now());
             let delay = '-';
@@ -69,31 +68,30 @@ export const Commands = {
         ],
         conditions: ['is_quoted','is_quoted_view'],
         handler: async (ctx, args) => {
-            //console.log(args)
-            //console.log(ctx.quotedMessage)
-            if(args.hint){
-                await ctx.editMsg(args.hint)
-            }
             const tipo = ctx.quotedType;
             const caption = ctx.quotedMessage[tipo]?.caption ?? '';
+            const paraOutro = !args.vo && args.hint;
+
             if(tipo === 'imageMessage'){
                 const midia = await ctx.downloadMidia(ctx.isQuoted)
                 if(midia){
-                    if(!args.vo && args.hint){
-                        await ctx.sendImageTo( ctx.lid, midia, caption)
-                    } else {
-                        await ctx.sendImage( midia, caption, Boolean(args.vo) )
-                    }
+                    await ctx.image(midia, {
+                        caption,
+                        view: Boolean(args.vo),
+                        quoted: false,
+                        para: paraOutro ? ctx.lid : null,
+                    })
                     await deleteFile(midia)
                 }
             } else if(tipo === 'videoMessage'){
                 const midia = await ctx.downloadMidia(ctx.isQuoted)
                 if(midia){
-                    if(!args.vo && args.hint){
-                        await ctx.sendVideoTo( ctx.lid, midia, caption )
-                    } else {
-                        await ctx.sendVideo( midia, caption, Boolean(args.vo))
-                    }
+                    await ctx.video(midia, {
+                        caption,
+                        view: Boolean(args.vo),
+                        quoted: false,
+                        para: paraOutro ? ctx.lid : null,
+                    })
                     await deleteFile(midia)
                 }
             }
@@ -170,11 +168,11 @@ export const Commands = {
             if(audio){
                 if(args.phone){
                     const [user] = await ctx.getLid( `55${args.phone}@s.whatsapp.net` )
-                    if(user.exists == true && user.lid !== null){
-                        await ctx.replyAudioTo( user.lid, audio, true )
+                    if(user?.exists === true && user?.lid){
+                        await ctx.audio( audio, { ptt: true, quoted: false, para: user.lid } )
                     }
                 } else {
-                    await ctx.replyAudio( audio, true )
+                    await ctx.audio( audio, { ptt: true } )
                 }
                 await deleteFile(audio)
             }

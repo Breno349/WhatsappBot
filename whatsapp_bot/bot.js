@@ -136,7 +136,7 @@ export async function startWA( tentativa = 0 ){
         })
         if(Bot.sock){
             Bot.sock.ev.removeAllListeners()
-            sock.ws.close()
+            Bot.sock.ws.close()
         }
         Bot.sock = null;
         return null;
@@ -257,7 +257,6 @@ export async function startWA( tentativa = 0 ){
         if(type === "notify"){
             for(const m of messages){
                 if(!m.message) continue;
-                //console.log(m)
                 const {text, name, lid, msgType, quotedLid, quotedMessage, quotedType, isBot, isGroup, isQuoted, isView, mentions} = parseMessage(m)
                 if(ignoreTypes.includes(msgType)) continue;
 
@@ -273,12 +272,16 @@ export async function startWA( tentativa = 0 ){
                 if(!text.startsWith(config.prefixo)) continue;
                 const [cmd, ...args] = text.slice(config.prefixo.length).trim().split(/\s+/);
                 if(!Commands[cmd]) continue;
+
+                // função genérica de envio de mídia — substitui replyImage/sendImage/sendImageTo,
+                // replyVideo/sendVideo/sendVideoTo, replyAudio/replyAudioTo
                 async function enviarMidia(tipoChave, buffer, { caption='', view=false, quoted=true, para=null, extra={} } = {}) {
                     const destino = para ?? m.key.remoteJid;
                     const payload = { [tipoChave]: { url: buffer }, viewOnce: view, caption, ...extra };
                     const opcoesEnvio = quoted ? { quoted: m } : {};
                     return await sock.sendMessage(destino, payload, opcoesEnvio);
                 }
+
                 const ctx = {
                     text, name, args, lid, msgType, quotedLid, quotedMessage, quotedType, isBot, isGroup, isQuoted, isView, mentions, m,
                     replyText: async (txt) => await sock.sendMessage(m.key.remoteJid, { text: txt }, { quoted: m }),
@@ -286,7 +289,7 @@ export async function startWA( tentativa = 0 ){
                     replyFig: async (buffer) => await sock.sendMessage(m.key.remoteJid, { sticker: { url: buffer } }, { quoted: m }),
                     image: async (buffer, opcoes={}) => await enviarMidia('image', buffer, opcoes),
                     video: async (buffer, opcoes={}) => await enviarMidia('video', buffer, opcoes),
-                    audio: async (buffer, opcoes={}) => await enviarMidia('audio', buffer, { ...opcoes, extra: { mimetype: 'audio/mp4', ptt: opcoes.ptt ?? false } }),
+                    audio: async (buffer, opcoes={}) => await enviarMidia('audio', buffer, { ...opcoes, extra: { mimetype: 'audio/mp4', ptt: opcoes.ptt ?? false, ...(opcoes.extra ?? {}) } }),
                     waitForResponse: async (opcoes) => await waitForResponse(m.key.remoteJid, lid, opcoes),
                     replyReact: async (emoji) => await sock.sendMessage(m.key.remoteJid, { react: { text: emoji, key: m.key } }), // emoji vazio '' remove a reação
                     replyDocument: async (buffer, nomeArquivo, mimetype) => await sock.sendMessage(m.key.remoteJid, { document: { url: buffer }, fileName: nomeArquivo, mimetype }, { quoted: m }),
@@ -299,7 +302,7 @@ export async function startWA( tentativa = 0 ){
                     replyPoll: async (pergunta, opcoes, multiplaEscolha=false) => await sock.sendMessage(m.key.remoteJid, {
                         poll: { name: pergunta, values: opcoes, selectableCount: multiplaEscolha ? opcoes.length : 1 }
                     }, { quoted: m }),
-                    deleteMsg: async (quoted=false) => await sock.sendMessage(m.key.remoteJid, { delete: m.key }), // apaga a própria mensagem enviada pelo bot
+                    deleteMsg: async () => await sock.sendMessage(m.key.remoteJid, { delete: m.key }), // apaga a própria mensagem enviada pelo bot
                     pinMsg: async (segundos=86400) => await sock.sendMessage(m.key.remoteJid, { pin: { type: 1, time: segundos, key: m.key } }),
                     getLid: async (jid) => await sock.onWhatsApp(jid),
                     downloadMidia: async (marcada=false) => await download(m, marcada)
@@ -309,7 +312,6 @@ export async function startWA( tentativa = 0 ){
             }
         } else {
             // mensagens antigas entre outras
-            //console.log(messages)
         }
     })
 }
@@ -330,8 +332,6 @@ async function deleteSessaoAtual(){
             return false;
         }
     } else if(config.login_mode === "db"){
-        // chamar uma função de apagar minha sessão no mesmo arquivo que salva as chaves e a sessão
-        // a possui um try/catch interno
         const res = await deletarSessaoDB( config.login_name )
         return res;
     }
