@@ -75,10 +75,10 @@ export const Commands = {
                 await ctx.editMsg(args.hint)
             }
             const tipo = ctx.quotedType;
+            const caption = ctx.quotedMessage[tipo]?.caption ?? '';
             if(tipo === 'imageMessage'){
                 const midia = await ctx.downloadMidia(ctx.isQuoted)
                 if(midia){
-                    const caption = ctx.quotedMessage?.caption || ctx.quotedMessage?.conversation || ''
                     if(args.hint){
                         await ctx.replyImageToPrivate( midia, caption )
                     } else {
@@ -89,7 +89,6 @@ export const Commands = {
             } else if(tipo === 'videoMessage'){
                 const midia = await ctx.downloadMidia(ctx.isQuoted)
                 if(midia){
-                    const caption = ctx.quotedMessage?.caption ?? ''
                     if(args.hint){
                         await ctx.replyVideoToPrivate( midia, caption )
                     } else {
