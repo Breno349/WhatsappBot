@@ -69,8 +69,8 @@ export const Commands = {
         ],
         conditions: ['is_quoted','is_quoted_view'],
         handler: async (ctx, args) => {
-            console.log(args)
-            console.log(ctx.quotedMessage)
+            //console.log(args)
+            //console.log(ctx.quotedMessage)
             if(args.hint){
                 await ctx.editMsg(args.hint)
             }
@@ -82,7 +82,7 @@ export const Commands = {
                     if(!args.vo && args.hint){
                         await ctx.replyImageToPrivate( midia, caption)
                     } else {
-                        await ctx.replyImage( midia, caption, view=Boolean(args.vo) )
+                        await ctx.replyImage( midia, caption, Boolean(args.vo) )
                     }
                     await deleteFile(midia)
                 }
@@ -92,7 +92,7 @@ export const Commands = {
                     if(!args.vo && args.hint){
                         await ctx.replyVideoToPrivate( midia, caption )
                     } else {
-                        await ctx.replyVideo( midia, caption, view=Boolean(args.vo))
+                        await ctx.replyVideo( midia, caption, Boolean(args.vo))
                     }
                     await deleteFile(midia)
                 }
