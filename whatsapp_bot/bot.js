@@ -273,21 +273,22 @@ export async function startWA( tentativa = 0 ){
                 if(!text.startsWith(config.prefixo)) continue;
                 const [cmd, ...args] = text.slice(config.prefixo.length).trim().split(/\s+/);
                 if(!Commands[cmd]) continue;
+                async function enviarMidia(tipoChave, buffer, { caption='', view=false, quoted=true, para=null, extra={} } = {}) {
+                    const destino = para ?? m.key.remoteJid;
+                    const payload = { [tipoChave]: { url: buffer }, viewOnce: view, caption, ...extra };
+                    const opcoesEnvio = quoted ? { quoted: m } : {};
+                    return await sock.sendMessage(destino, payload, opcoesEnvio);
+                }
                 const ctx = {
                     text, name, args, lid, msgType, quotedLid, quotedMessage, quotedType, isBot, isGroup, isQuoted, isView, mentions, m,
                     replyText: async (txt) => await sock.sendMessage(m.key.remoteJid, { text: txt }, { quoted: m }),
                     editMsg: async (txt) => await sock.sendMessage(m.key.remoteJid, { text: txt, edit: m.key }),
                     replyFig: async (buffer) => await sock.sendMessage(m.key.remoteJid, { sticker: { url: buffer } }, { quoted: m }),
-                    replyImage: async (buffer,caption='',view=false) => await sock.sendMessage(m.key.remoteJid, {image: {url: buffer}, viewOnce: view, caption}, { quoted: m } ),
-                    sendImage: async (buffer,caption='',view=false) => await sock.sendMessage(m.key.remoteJid, {image: {url: buffer}, viewOnce: view, caption} ),
-                    sendImageTo: async (new_lid,buffer,caption='') => await sock.sendMessage(new_lid, {image: {url: buffer}, caption}, { quoted: m } ),
-                    replyVideo: async (buffer,caption='',view=false) => await sock.sendMessage(m.key.remoteJid, {video: {url: buffer}, viewOnce: view, caption}, { quoted: m } ),
-                    sendVideo: async (buffer,caption='',view=false) => await sock.sendMessage(m.key.remoteJid, {video: {url: buffer}, viewOnce: view, caption} ),
-                    sendVideoTo: async (new_lid,buffer,caption='') => await sock.sendMessage(new_lid, {video: {url: buffer}, caption}, { quoted: m } ),
+                    image: async (buffer, opcoes={}) => await enviarMidia('image', buffer, opcoes),
+                    video: async (buffer, opcoes={}) => await enviarMidia('video', buffer, opcoes),
+                    audio: async (buffer, opcoes={}) => await enviarMidia('audio', buffer, { ...opcoes, extra: { mimetype: 'audio/mp4', ptt: opcoes.ptt ?? false } }),
                     waitForResponse: async (opcoes) => await waitForResponse(m.key.remoteJid, lid, opcoes),
                     replyReact: async (emoji) => await sock.sendMessage(m.key.remoteJid, { react: { text: emoji, key: m.key } }), // emoji vazio '' remove a reação
-                    replyAudio: async (buffer, ptt=false) => await sock.sendMessage(m.key.remoteJid, { audio: { url: buffer }, mimetype: 'audio/mp4', ptt }, { quoted: m }),
-                    replyAudioTo: async (lid_other, buffer, ptt=false, view=false) => await sock.sendMessage(lid_other, { audio: { url: buffer }, viewOnce: view, mimetype: 'audio/mp4', ptt }),
                     replyDocument: async (buffer, nomeArquivo, mimetype) => await sock.sendMessage(m.key.remoteJid, { document: { url: buffer }, fileName: nomeArquivo, mimetype }, { quoted: m }),
                     replyGif: async (buffer, caption='') => await sock.sendMessage(m.key.remoteJid, { video: { url: buffer }, caption, gifPlayback: true }, { quoted: m }),
                     replyLocation: async (lat, lon, nome='') => await sock.sendMessage(m.key.remoteJid, { location: { degreesLatitude: lat, degreesLongitude: lon, name: nome } }, { quoted: m }),
