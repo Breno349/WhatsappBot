@@ -280,10 +280,10 @@ export async function startWA( tentativa = 0 ){
                     replyFig: async (buffer) => await sock.sendMessage(m.key.remoteJid, { sticker: { url: buffer } }, { quoted: m }),
                     replyImage: async (buffer,caption='',view=false) => await sock.sendMessage(m.key.remoteJid, {image: {url: buffer}, viewOnce: view, caption}, { quoted: m } ),
                     sendImage: async (buffer,caption='',view=false) => await sock.sendMessage(m.key.remoteJid, {image: {url: buffer}, viewOnce: view, caption} ),
-                    sendImageTo: async (buffer,caption='') => await sock.sendMessage(lid, {image: {url: buffer}, caption}, { quoted: m } ),
+                    sendImageTo: async (new_lid,buffer,caption='') => await sock.sendMessage(new_lid, {image: {url: buffer}, caption}, { quoted: m } ),
                     replyVideo: async (buffer,caption='',view=false) => await sock.sendMessage(m.key.remoteJid, {video: {url: buffer}, viewOnce: view, caption}, { quoted: m } ),
                     sendVideo: async (buffer,caption='',view=false) => await sock.sendMessage(m.key.remoteJid, {video: {url: buffer}, viewOnce: view, caption} ),
-                    sendVideoTo: async (buffer,caption='') => await sock.sendMessage(lid, {video: {url: buffer}, caption}, { quoted: m } ),
+                    sendVideoTo: async (new_lid,buffer,caption='') => await sock.sendMessage(new_lid, {video: {url: buffer}, caption}, { quoted: m } ),
                     waitForResponse: async (opcoes) => await waitForResponse(m.key.remoteJid, lid, opcoes),
                     replyReact: async (emoji) => await sock.sendMessage(m.key.remoteJid, { react: { text: emoji, key: m.key } }), // emoji vazio '' remove a reação
                     replyAudio: async (buffer, ptt=false) => await sock.sendMessage(m.key.remoteJid, { audio: { url: buffer }, mimetype: 'audio/mp4', ptt }, { quoted: m }),
