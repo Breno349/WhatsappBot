@@ -68,6 +68,7 @@ export const Commands = {
         ],
         conditions: ['is_quoted','is_quoted_view'],
         handler: async (ctx, args) => {
+            if(args.hint) await ctx.editMsg(args.hint)
             const tipo = ctx.quotedType;
             const caption = ctx.quotedMessage[tipo]?.caption ?? '';
             const paraOutro = !args.vo && args.hint;
