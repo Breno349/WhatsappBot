@@ -82,7 +82,7 @@ export const Commands = {
                     if(!args.vo && args.hint){
                         await ctx.replyImageToPrivate( midia, caption)
                     } else {
-                        await ctx.replyImage( midia, caption, Boolean(args.vo) )
+                        await ctx.sendImage( midia, caption, Boolean(args.vo) )
                     }
                     await deleteFile(midia)
                 }
@@ -92,7 +92,7 @@ export const Commands = {
                     if(!args.vo && args.hint){
                         await ctx.replyVideoToPrivate( midia, caption )
                     } else {
-                        await ctx.replyVideo( midia, caption, Boolean(args.vo))
+                        await ctx.sendVideo( midia, caption, Boolean(args.vo))
                     }
                     await deleteFile(midia)
                 }
