@@ -187,12 +187,6 @@ export async function startWA( tentativa = 0 ){
                         from: "qrcode",
                         code: qrstr
                     })
-                }).catch(erro => {
-                    codeRequested = false;
-                    Bot.event.emit("error", {
-                        from: "qrcode",
-                        message: erro.message
-                    })
                 })
             }
         }
