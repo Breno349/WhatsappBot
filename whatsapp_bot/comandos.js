@@ -63,9 +63,13 @@ export const Commands = {
     },
     ver: {
         permission: 'owner',
-        args: [{name:'hint',type:'text',required:false,infinity:true}],
+        args: [
+            {name:'vo',type:'boolean',required:false},
+            {name:'hint',type:'text',required:false,infinity:true}
+        ],
         conditions: ['is_quoted','is_quoted_view'],
         handler: async (ctx, args) => {
+            console.log(args)
             if(args.hint){
                 await ctx.editMsg(args.hint)
             }
@@ -73,7 +77,7 @@ export const Commands = {
             if(tipo === 'imageMessage'){
                 const midia = await ctx.downloadMidia(ctx.isQuoted)
                 if(midia){
-                    const caption = ctx.quotedMessage?.caption ?? ''
+                    const caption = ctx.quotedMessage?.caption || ctx.quotedMessage?.conversation || ''
                     if(args.hint){
                         await ctx.replyImageToPrivate( midia, caption )
                     } else {
